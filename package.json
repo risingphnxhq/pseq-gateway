@@ -1,5 +1,14 @@
 {
   "devDependencies": {
+    "esbuild": "0.25.11",
     "linkedom": "0.18.12"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.76.1"
+  },
+  "private": true,
+  "scripts": {
+    "build:account": "esbuild account-entry.js --bundle --minify --format=iife --outfile=vendor/pbs-account.js --legal-comments=linked",
+    "test": "node tests/consultation.cjs && node tests/consultation-dom.cjs && node tests/cloud-drafts.cjs && node tests/account-dom.cjs"
   }
 }

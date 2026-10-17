@@ -1,4 +1,6 @@
-# PBS continuing consultation workspace — construction increment
+# PBS continuing consultation workspace — initial construction increment
+
+Update: The later persistence/account increment is documented in [draft-persistence.md](draft-persistence.md). Statements below about missing account storage/import describe the initial d8e0b716 increment; the later branch adds versioned server drafts, an existing-account pilot and file recovery. Production authority and acceptance remain pending.
 
 Actor: Codex in Corporate Chad's conversation, October 17, 2026. No independently authenticated officer or CATE action is claimed.
 
