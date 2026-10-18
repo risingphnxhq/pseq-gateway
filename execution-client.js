@@ -16,6 +16,6 @@ $('execution-start').onclick=()=>run(async()=>{const draft=window.PBSWorkspace?.
 $('execution-list').onclick=()=>run(async()=>{const b=business(),records=await rpc('pbs_execution_read_v1',{p_business_id:b,p_consultation_id:null});if(business()!==b)return;const out=$('execution-list-results');out.replaceChildren();for(const r of records)action(out,r.goal+' · '+r.month.slice(0,7),async()=>{if(!window.confirm('Load this saved consultation? Any unsent work in this form will be replaced.'))return;await load(r.consultation_id,b);$('execution-message').textContent='Your saved consultation is loaded.';});$('execution-message').textContent=records.length+' registered consultations found.';});
 document.addEventListener('pbs-case-reviewed',e=>{if(activeBusiness===e.detail?.business_id)$('execution-message').textContent='PBS feedback is saved. Load your saved tasks again to see any available review of the work requirements. A submission receipt does not prove business results.';});
 function clear(){active=null;activeBusiness=null;$('execution-record').replaceChildren();$('execution-list-results').replaceChildren();$('execution-message').textContent='';}
-$('business-select').addEventListener('change',clear);document.addEventListener('pbs-account-signed-out',()=>{pending.clear();clear();});
+$('business-select').addEventListener('change',clear);document.addEventListener('pbs-business-context-changed',clear);document.addEventListener('pbs-account-signed-out',()=>{pending.clear();clear();});
 })();
 
