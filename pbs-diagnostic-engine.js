@@ -150,11 +150,11 @@ const DOMAINS=[
         "choices": [
           "No defined scope or completion standard",
           "Scope described but completion is subjective",
-          "Deliverables, turnaround and acceptance criteria documented",
+          "Deliverables, turnaround and standards for finished work documented",
           "Actual delivery is checked against those criteria and improved"
         ],
         "proof": "Service specification, pilot acceptance or completed orders",
-        "action": "Define what the customer receives, timing, exclusions and observable acceptance criteria. Test one complete delivery.",
+        "action": "Define what the customer receives, timing, exclusions and observable standards for finished work. Test one complete delivery.",
         "metric": "Deliveries meeting agreed acceptance and timing"
       },
       {
@@ -388,10 +388,10 @@ function evaluate(input){
  const areas=DOMAINS.map(d=>{const relevant=qs.filter(q=>q.domain===d.id),known=relevant.filter(q=>Number.isInteger(answers[q.id]));const score=known.length?100*known.reduce((s,q)=>s+answers[q.id],0)/(3*known.length):null;const complete=known.length===relevant.length;return {id:d.id,name:d.name,why:d.why,score:score===null?null:Math.round(score),coverage:known.length/relevant.length,status:score===null?'UNKNOWN':score<45?'RED':(!complete||score<75)?'YELLOW':'GREEN',questions:relevant.map(q=>({...q,answer:answers[q.id]??null,reference:String(input.references?.[q.id]||'').trim().slice(0,240)}))};});
  const score=areas.every(a=>a.score!==null)?Math.round(areas.reduce((s,a)=>s+a.score,0)/areas.length):null;
  let status='YELLOW',reason='Some practices or information gaps need attention before the next commitment.';
- if(urgent.length){status='RED';reason='A current risk you reported takes priority over the average practice index.';}
+ if(urgent.length){status='RED';reason='A current risk you reported takes priority over the average score.';}
  else if(areas.some(a=>a.status==='RED')){status='RED';reason='At least one assessed business area needs prompt corrective attention.';}
  else if(!answered.length){status='UNKNOWN';reason='No practice answers yet. There is not enough information to assess your position.';}
- else if(coverage===1&&knownRisks.length===RISKS.length&&areas.every(a=>a.status==='GREEN')){status='GREEN';reason='Your declared practices appear supportive of the next step. Confirm important assumptions before committing.';}
+ else if(coverage===1&&knownRisks.length===RISKS.length&&areas.every(a=>a.status==='GREEN')){status='GREEN';reason='Your practices you report appear supportive of the next step. Confirm important assumptions before committing.';}
  const referenceCount=answered.filter(q=>String(input.references?.[q.id]||'').trim()).length;
  const weaknesses=areas.flatMap(a=>a.questions.filter(q=>q.answer!==null&&q.answer<3).map(q=>({...q,area:a.name,severity:3-q.answer}))).sort((a,b)=>b.severity-a.severity||a.id.localeCompare(b.id));
  const strengths=areas.flatMap(a=>a.questions.filter(q=>q.answer===3).map(q=>({area:a.name,prompt:q.prompt,basis:q.choices[3]})));
@@ -399,7 +399,8 @@ function evaluate(input){
  const plan=weaknesses.slice(0,3).map((q,i)=>({horizon:['First 30 days','Days 31–60','Days 61–90'][i],area:q.area,finding:'You selected: '+q.choices[q.answer],hypothesis:'This may limit '+DOMAINS.find(d=>d.id===q.domain).name.toLowerCase()+'. Confirm with the suggested record before assuming a cause.',action:q.action,measure:q.metric,evidence:q.proof,owner:'Choose an accountable business owner',review:'Set a review date after establishing a baseline'}));
  const tensions=[];if(risks.cash_due==='yes'&&answers.cashview===3)tensions.push('You report a tested cash forecast and an expected payment shortfall. A reliable forecast can reveal a real shortfall; prioritize the shortfall rather than treating the forecast as a solution.');
  if(risks.delivery_failure==='yes'&&answers.promise===3)tensions.push('You report strong delivery checks and commitments you cannot fulfill. Investigate the affected commitments; do not infer that documented checks mean delivery succeeded.');
- return {version:VERSION,mode:input.mode,stage:input.stage,business:String(input.business||'Your business').trim().slice(0,120),goal:String(input.goal||'').trim().slice(0,600),generated_at:new Date().toISOString(),status,reason,score,coverage:Math.round(coverage*100),risk_coverage:Math.round(knownRisks.length/RISKS.length*100),risk_answers:Object.fromEntries(RISKS.map(r=>[r.id,risks[r.id]||'unknown'])),references:referenceCount,independent_verifications:0,areas,urgent,gaps,tensions,strengths,plan,limits:'Original PBS developmental rubric. Self-reported practices, not a credit score, certification, industry percentile, verified financial health or professional opinion. Thresholds are design rules, not empirically calibrated predictions. Records referenced here have not been reviewed.'};
+ return {version:VERSION,mode:input.mode,stage:input.stage,business:String(input.business||'Your business').trim().slice(0,120),goal:String(input.goal||'').trim().slice(0,600),generated_at:new Date().toISOString(),status,reason,score,coverage:Math.round(coverage*100),risk_coverage:Math.round(knownRisks.length/RISKS.length*100),risk_answers:Object.fromEntries(RISKS.map(r=>[r.id,risks[r.id]||'unknown'])),references:referenceCount,independent_verifications:0,areas,urgent,gaps,tensions,strengths,plan,limits:'PBS scoring rules use your own answers. This is not a credit score, certification, comparison with other businesses, verified financial review or professional opinion. The scoring cutoffs have not been proven to predict results. Records you named have not been reviewed.'};
 }
 return {VERSION,DOMAINS,RISKS,questions,evaluate};
 });
+
