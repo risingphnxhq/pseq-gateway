@@ -9,6 +9,6 @@
   "private": true,
   "scripts": {
     "build:account": "esbuild account-entry.js --bundle --minify --format=iife --outfile=vendor/pbs-account.js --legal-comments=linked",
-    "test": "node tests/consultation.cjs && node tests/consultation-dom.cjs && node tests/cloud-drafts.cjs && node tests/account-dom.cjs && node tests/execution-dom.cjs && node tests/advisor.cjs && node tests/advisor-dom.cjs && node tests/case-dom.cjs && node tests/bound-review-dom.cjs && node tests/assessment-continuity.cjs && node tests/working-plan.cjs && node tests/print-workspace.cjs && node tests/conflict-response.cjs && node tests/context-races.cjs"
+    "test": "node tests/consultation.cjs && node tests/consultation-dom.cjs && node tests/cloud-drafts.cjs && node tests/account-dom.cjs && node tests/execution-dom.cjs && node tests/advisor.cjs && node tests/advisor-dom.cjs && node tests/case-dom.cjs && node tests/bound-review-dom.cjs && node tests/assessment-continuity.cjs && node tests/working-plan.cjs && node tests/print-workspace.cjs && node tests/conflict-response.cjs && node tests/context-races.cjs && node tests/saved-assessment-report.cjs"
   }
 }
