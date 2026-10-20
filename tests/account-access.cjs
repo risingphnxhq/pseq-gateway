@@ -26,5 +26,32 @@ function setup(callback={},overrides={}){
  x=setup({type:'recovery',error:true,access_token:'fictional'});await x.d.getElementById('verify-account-link').onclick();ok(!x.calls.some(c=>c[0]==='session'));ok(!x.d.getElementById('account-reset-request').hidden);
  const unopened={type:'recovery',access_token:'unopened-a',refresh_token:'unopened-r'};x=setup(unopened);x.window.dispatchEvent(new x.window.Event('pagehide'));ok(unopened.access_token===null&&unopened.refresh_token===null);ok(x.d.getElementById('recovery-identity').textContent==='');
  ok(/persistSession:false/.test(fs.readFileSync('account-entry.js','utf8'))&&/detectSessionInUrl:false/.test(fs.readFileSync('account-entry.js','utf8')));
+
+ // Requests begun before navigation must not revive a closed recovery page.
+ const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
+ let wait=deferred();x=setup({type:'recovery',token_hash:'pending'},{verifyOtp:()=>wait.promise});
+ let pending=x.d.getElementById('verify-account-link').onclick();
+ x.window.dispatchEvent(new x.window.Event('pagehide'));
+ wait.resolve({data:{session:{}}});await pending;
+ ok(x.d.getElementById('account-new-password').hidden);
+ ok(x.d.getElementById('recovery-identity').textContent==='');
+ ok(x.calls.filter(c=>c[0]==='signout').length>=2);
+ ok(x.d.getElementById('verify-account-link').disabled);
+ wait=deferred();x=setup({type:'recovery',token_hash:'pending-user'},{getUser:()=>wait.promise});
+ pending=x.d.getElementById('verify-account-link').onclick();await Promise.resolve();await Promise.resolve();
+ x.window.dispatchEvent(new x.window.Event('pagehide'));
+ wait.resolve({data:{user:{id:'user-a',email:'fictional@example.invalid'}}});await pending;
+ ok(x.d.getElementById('account-new-password').hidden);
+ ok(x.d.getElementById('recovery-identity').textContent==='');
+ x=setup({type:'recovery',token_hash:'change-pending'});await x.d.getElementById('verify-account-link').onclick();
+ wait=deferred();x.auth.getUser=()=>wait.promise;
+ x.d.getElementById('recovery-account-confirm').checked=true;
+ x.set('new-password','new-long-fictional-password');x.set('new-password-confirm','new-long-fictional-password');
+ pending=x.submit('new-password-form');x.window.dispatchEvent(new x.window.Event('pagehide'));
+ wait.resolve({data:{user:{id:'user-a',email:'fictional@example.invalid'}}});await pending;
+ ok(!x.calls.some(c=>c[0]==='update'));
+ ok(x.d.getElementById('account-new-password').hidden);
+ ok(x.d.getElementById('new-password').value==='');
+
  console.log(checks+' account setup and recovery checks passed (synthetic DOM/authentication; no delivered email or real recovery-token acceptance).');
 })().catch(e=>{console.error(e);process.exitCode=1;});
