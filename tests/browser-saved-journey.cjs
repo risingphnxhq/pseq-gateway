@@ -10,8 +10,8 @@ module.exports=async function({email,password,businessId}){const result={type:'R
  const root=process.cwd();server=http.createServer((req,res)=>{const p=path.resolve(root,'.'+new URL(req.url,'http://local').pathname);if(!p.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
  fs.readFile(p,(err,data)=>{if(err){res.writeHead(404);return res.end();}const ext=path.extname(p);res.setHeader('Content-Type',({'.html':'text/html','.js':'application/javascript','.css':'text/css','.png':'image/png'})[ext]||'application/octet-stream');res.end(data);});});await new Promise(r=>server.listen(8765,'127.0.0.1',r));
  const bin=execFileSync('which',['google-chrome'],{encoding:'utf8'}).trim();
- chrome=spawn(bin,['--headless=new','--no-sandbox','--disable-gpu','--remote-debugging-port=9222','--user-data-dir='+process.env.RUNNER_TEMP+'/pbs-chrome','about:blank'],{stdio:'ignore'});
- let target;for(let i=0;i<100;i++){try{target=await(await fetch('http://127.0.0.1:9222/json/new?about:blank',{method:'PUT'})).json();break;}catch{await pause(100);}}if(!target)throw Error('Chrome did not start');
+ chrome=spawn(bin,['--headless=new','--no-first-run','--disable-dev-shm-usage','--no-sandbox','--disable-gpu','--remote-debugging-port=9222','--user-data-dir='+process.env.RUNNER_TEMP+'/pbs-chrome','about:blank'],{stdio:'ignore'});
+ let target;for(let i=0;i<300;i++){try{target=await(await fetch('http://127.0.0.1:9222/json/new?about:blank',{method:'PUT'})).json();break;}catch{await pause(100);}}if(!target)throw Error('Chrome did not start');
  ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j;});ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);if(p){pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);}}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.text);};
  await cdp('Runtime.enable');await cdp('Page.enable');
  await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:900,deviceScaleFactor:1,mobile:false});
