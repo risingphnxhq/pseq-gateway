@@ -24,6 +24,7 @@ function setup(callback={},overrides={}){
  x=setup({type:'recovery',token_hash:'expired'},{verifyOtp:async()=>({error:{message:'expired'}})});await x.d.getElementById('verify-account-link').onclick();ok(x.d.getElementById('account-new-password').hidden);ok(!x.d.getElementById('account-reset-request').hidden);ok(x.msg().includes('no password was changed'));
  x=setup({type:'email',token_hash:'fictional'});await x.d.getElementById('verify-account-link').onclick();ok(x.d.getElementById('account-new-password').hidden);ok(x.calls.some(c=>c[0]==='signout'));
  x=setup({type:'recovery',error:true,access_token:'fictional'});await x.d.getElementById('verify-account-link').onclick();ok(!x.calls.some(c=>c[0]==='session'));ok(!x.d.getElementById('account-reset-request').hidden);
+ const unopened={type:'recovery',access_token:'unopened-a',refresh_token:'unopened-r'};x=setup(unopened);x.window.dispatchEvent(new x.window.Event('pagehide'));ok(unopened.access_token===null&&unopened.refresh_token===null);ok(x.d.getElementById('recovery-identity').textContent==='');
  ok(/persistSession:false/.test(fs.readFileSync('account-entry.js','utf8'))&&/detectSessionInUrl:false/.test(fs.readFileSync('account-entry.js','utf8')));
  console.log(checks+' account setup and recovery checks passed (synthetic DOM/authentication; no delivered email or real recovery-token acceptance).');
 })().catch(e=>{console.error(e);process.exitCode=1;});

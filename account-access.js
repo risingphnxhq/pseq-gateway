@@ -32,5 +32,5 @@ $('new-password-form').onsubmit=e=>{e.preventDefault();const a=$('new-password')
  const signedOut=await account.auth.signOut({scope:'global'});await localSignout();$('account-new-password').hidden=true;$('recovery-account-confirm').checked=false;
  message(signedOut.error?'Password updated. Sign-out did not finish. Close this page and return to sign-in.':'Password updated. Return to PBS and sign in with the new password to recover your saved work.');
  });};
-window.addEventListener('pagehide',()=>{clearPasswords();link=null;recoveryUser=null;});
+window.addEventListener('pagehide',()=>{clearPasswords();for(const value of [callback,link])if(value){value.access_token=null;value.refresh_token=null;value.token_hash=null;}link=null;recoveryUser=null;$('recovery-identity').textContent='';$('account-new-password').hidden=true;$('recovery-account-confirm').checked=false;account.auth.stopAutoRefresh?.();void localSignout();});
 })();
