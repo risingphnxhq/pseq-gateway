@@ -74,6 +74,6 @@ const newClient=()=>{const c=createClient(url,key,{global:{fetch:transport},auth
  const freshReport=await rpc(extra,'pbs_assessment_report_v1',reportArgs);check('fresh session recovers same calculated report',freshReport.report_id===serverReport.report_id&&freshReport.duplicate===true);
  if(process.env.PBS_TEST_BROWSER==='yes'){const observed=await require('./browser-saved-journey.cjs')({...credentials[1],businessId:ids[1]});evidence.browser=observed;for(const c of observed.checks)evidence.checks.push(c);}
  evidence.state=evidence.checks.every(c=>c.passed)?'PASS':'INCOMPLETE';if(evidence.state!=='PASS')process.exitCode=1;
-}catch(e){evidence.state='INCOMPLETE';evidence.failure=e.message;process.exitCode=1;}
+}catch(e){if(e.browser_evidence)evidence.browser=e.browser_evidence;evidence.state='INCOMPLETE';evidence.failure=e.message;process.exitCode=1;}
 finally{for(const c of clients){const {error}=await c.auth.signOut({scope:'global'});evidence.cleanup.push({global_signout_requested:!error});c.auth.stopAutoRefresh();}credentials.length=0;fs.writeFileSync(process.env.PBS_EVIDENCE_PATH||'pbs-live-continuity-evidence.json',JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));}
 })();

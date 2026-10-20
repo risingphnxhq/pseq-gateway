@@ -35,10 +35,10 @@ module.exports=async function({email,password,businessId}){const result={type:'R
  await click('Save current consultation draft');record('browser saves consultation draft',await evaluate("document.getElementById('cloud-message').textContent.includes('Saved draft version 1')"));
  await click('Register current four tasks');record('browser registers four tasks',await evaluate("document.querySelectorAll('#execution-record article').length===4"));
  record('browser displays required submission disclosure',await evaluate("document.querySelector('#execution-record .checkline label').textContent.includes('inadequate')"));
- await evaluate("const f=document.querySelector('#execution-record article form');f.querySelector('input:not([type=checkbox])').value='Fictional browser worksheet';f.querySelector('textarea').value='Incomplete fictional work: baseline date still missing; no improvement claimed.';f.querySelector('input[type=checkbox]').checked=true;f.requestSubmit()");
+ await evaluate("(()=>{const f=document.querySelector('#execution-record article form');f.querySelector('input:not([type=checkbox])').value='Fictional browser worksheet';f.querySelector('textarea').value='Incomplete fictional work: baseline date still missing; no improvement claimed.';f.querySelector('input[type=checkbox]').checked=true;f.requestSubmit()})()");
  await until("document.getElementById('execution-message').textContent.includes('Online submission receipt')");
  const receiptText=await evaluate("document.querySelector('#execution-record .receipt').textContent");record('browser receives receipt without quality approval',receiptText.includes('Quality unassessed'));
- await evaluate("const f=document.querySelector('#execution-record article form');f.querySelector('input:not([type=checkbox])').value='Fictional revised worksheet';f.querySelector('textarea').value='Revised fictional work adds a dated baseline; quality and real improvement remain unverified.';f.querySelector('input[type=checkbox]').checked=true;f.requestSubmit()");
+ await evaluate("(()=>{const f=document.querySelector('#execution-record article form');f.querySelector('input:not([type=checkbox])').value='Fictional revised worksheet';f.querySelector('textarea').value='Revised fictional work adds a dated baseline; quality and real improvement remain unverified.';f.querySelector('input[type=checkbox]').checked=true;f.requestSubmit()})()");
  await until("document.querySelectorAll('#execution-record .receipt').length===2");
  record('revised work preserves earlier receipt on same task',await evaluate("document.querySelector('#execution-record .receipt').textContent")==receiptText);
  record('revised submission still has no quality approval',await evaluate("[...document.querySelectorAll('#execution-record .receipt')].every(e=>e.textContent.includes('Quality unassessed'))"));
@@ -54,5 +54,5 @@ module.exports=async function({email,password,businessId}){const result={type:'R
  await click('Sign out');record('browser sign-out clears plan tasks and report',await evaluate("document.getElementById('workspace').hidden&&!document.querySelector('#execution-record .receipt')&&document.getElementById('assessment-saved-report').children.length===0"));
  record('authenticated browser has no unhandled script exceptions',errors.length===0);
  result.report_id=reportId;result.business_id=businessId;return result;
- }catch(e){throw e;}finally{ws?.close();chrome?.kill();server?.close();}
+ }catch(e){e.browser_evidence=result;throw e;}finally{ws?.close();chrome?.kill();server?.close();}
 };
