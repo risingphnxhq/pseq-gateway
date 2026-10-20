@@ -32,6 +32,7 @@ module.exports=async function({email,password,businessId}){const result={type:'R
  record('browser saves case context from the same assessment',await evaluate("document.getElementById('case-goal').value==='Fictional browser delivery goal'&&!document.getElementById('case-dialogue').hidden"));
  await fill({'assessment-owner':'Fictional browser owner','assessment-hours':'1','assessment-budget':'0','assessment-start':new Date().toISOString().slice(0,10)});
  await click('Prepare my four-task working plan');record('browser prepares four working tasks',await evaluate("!document.getElementById('workspace').hidden&&document.querySelectorAll('#tasks article').length===4"));
+ result.assessment_snapshot_id=await evaluate("window.PBSWorkspace.getCurrentDraft().legacy_plan_record.origin.snapshot_id");record('plan retains the saved assessment after capacity inputs',typeof result.assessment_snapshot_id==='string'&&/^[0-9a-f-]{36}$/.test(result.assessment_snapshot_id));
  await click('Save current consultation draft');record('browser saves consultation draft',await evaluate("document.getElementById('cloud-message').textContent.includes('Saved draft version 1')"));
  await click('Register current four tasks');record('browser registers four tasks',await evaluate("document.querySelectorAll('#execution-record article').length===4"));
  record('browser displays required submission disclosure',await evaluate("document.querySelector('#execution-record .checkline label').textContent.includes('inadequate')"));
