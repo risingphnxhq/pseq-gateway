@@ -38,3 +38,15 @@ jobs:
         env:
           PBS_RUN_NORMAL_ACCOUNT_TEST: 'yes'
           PBS_EVIDENCE_PATH: '${{ runner.temp }}/pbs-evidence.json'
+  browser-workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Check workspace in real headless Chrome
+        run: node tests/browser-workspace.cjs
