@@ -63,3 +63,20 @@ jobs:
           node-version: '22'
       - name: Read public authentication settings
         run: node tests/auth-settings-preflight.cjs
+  account-signup:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[account-signup-check]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Prove normal browser account creation
+        run: node tests/browser-account-signup.cjs
+        env:
+          PBS_RUN_ACCOUNT_SIGNUP_TEST: 'yes'
