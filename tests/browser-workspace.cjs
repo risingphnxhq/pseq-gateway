@@ -5,7 +5,7 @@ let checks=0,chrome,server,ws;const pending=new Map(),errors=[];let seq=0;
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),ok=(label,v)=>{assert.ok(v,label);checks++;console.log('PASS '+label);};
 async function cdp(method,params={}){const id=++seq;return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});}
 async function evaluate(expression){const r=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.text);return r.result.value;}
-async function until(expression){for(let i=0;i<100;i++){if(await evaluate(expression))return;await pause(100);}throw Error('Browser condition timed out: '+expression);}
+async function until(expression){for(let i=0;i<100;i++){if(await evaluate(expression))return;await pause(100);}throw Error('Browser condition timed out: '+expression+'; '+JSON.stringify(await evaluate("({message:document.getElementById('message')?.textContent,active:document.activeElement?.id,sampleClicks:window._sampleClicks,errors:"+JSON.stringify(errors)+"})")));}
 (async()=>{try{
  const root=process.cwd();server=http.createServer((req,res)=>{const p=path.resolve(root,'.'+new URL(req.url,'http://local').pathname);if(!p.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
  fs.readFile(p,(err,data)=>{if(err){res.writeHead(404);return res.end();}const ext=path.extname(p);res.setHeader('Content-Type',({'.html':'text/html','.js':'application/javascript','.css':'text/css','.png':'image/png'})[ext]||'application/octet-stream');res.end(data);});});await new Promise(r=>server.listen(8765,'127.0.0.1',r));
@@ -21,8 +21,8 @@ async function until(expression){for(let i=0;i<100;i++){if(await evaluate(expres
  ok('scripts initialize at '+width,await evaluate("!!window.PBSAccountClient && !!window.PBSAssessmentContinuity && !!window.PBSWorkspace"));
  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
  ok('keyboard reaches skip link at '+width,await evaluate("document.activeElement.classList.contains('skip')"));
- await evaluate("document.getElementById('sample').focus()");
- await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+ await evaluate("window._sampleClicks=0;document.getElementById('sample').addEventListener('click',()=>window._sampleClicks++);document.getElementById('sample').focus()");
+ await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
  await until("!document.getElementById('workspace').hidden");
  ok('keyboard opens fictional plan at '+width,await evaluate("document.querySelectorAll('#tasks article').length===4"));
  ok('no horizontal page overflow at '+width,await evaluate("document.documentElement.scrollWidth<=window.innerWidth+1"));
