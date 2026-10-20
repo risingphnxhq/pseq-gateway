@@ -41,6 +41,14 @@ const newClient=()=>{const c=createClient(url,key,{global:{fetch:transport},auth
  const read=await a.from('pbs_prs_snapshots').select('engine_version,prs_payload').eq('entity_id',ids[0]).eq('id',saved.snapshot_id).single();check('owner recovers assessment',!read.error);const restored=B.fromSnapshot(read.data);check('unknown answer retained',restored.answers.goal===null);check('declared report recalculates without Green invention',B.validate(restored).status==='YELLOW');
  const denied=await b.from('pbs_prs_snapshots').select('id').eq('entity_id',ids[0]);check('other customer cannot read assessment',!denied.error&&denied.data.length===0);
  const denySave=await b.rpc('pbs_save_assessment_draft_v1',{p_business_id:ids[0],p_request_id:crypto.randomUUID(),p_draft:input});check('other customer cannot save assessment',denySave.error?.code==='42501');
+ const reportArgs={p_business_id:ids[0],p_snapshot_id:saved.snapshot_id},serverReport=await rpc(a,'pbs_assessment_report_v1',reportArgs);
+ evidence.records[0].assessment_snapshot_id=saved.snapshot_id;evidence.records[0].assessment_report_id=serverReport.report_id;
+ check('server report bound to stored answers',serverReport.report.source_snapshot_id===saved.snapshot_id&&serverReport.report.input.answers.goal===null&&serverReport.report.calculated.status==='YELLOW');
+ check('server report matches current scoring method',serverReport.report.calculated.method_version===E.VERSION&&serverReport.report.calculated.coverage===B.validate(restored).coverage&&serverReport.report.calculated.independent_verifications===0);
+ const reportReplay=await rpc(a,'pbs_assessment_report_v1',reportArgs);check('server report retry returns same saved report',reportReplay.report_id===serverReport.report_id&&reportReplay.duplicate===true);
+ const otherReport=await b.rpc('pbs_assessment_report_v1',reportArgs);check('other customer report denied',otherReport.error?.code==='42501');
+ const wrongBusinessReport=await b.rpc('pbs_assessment_report_v1',{p_business_id:ids[1],p_snapshot_id:saved.snapshot_id});check('owned business cannot import another business source',wrongBusinessReport.error?.code==='42501');
+ const directReport=await a.from('pbs_prs_snapshots').update({prs_payload:{status:'GREEN'}}).eq('id',serverReport.report_id);check('customer cannot rewrite server report',directReport.error?.code==='42501');
  const p=B.plan(restored,{owner:'Fictional business owner',hours:1,budget:0,start:new Date().toISOString().slice(0,10),snapshotId:saved.snapshot_id}),month=new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'}).slice(0,7);
  // Explicit month independent of locale formatting differences.
  const parts=new Intl.DateTimeFormat('en',{timeZone:'America/Chicago',year:'numeric',month:'2-digit'}).formatToParts(new Date()),period=parts.find(x=>x.type==='year').value+'-'+parts.find(x=>x.type==='month').value;
@@ -63,6 +71,7 @@ const newClient=()=>{const c=createClient(url,key,{global:{fetch:transport},auth
  const recovered=await rpc(extra,'pbs_execution_read_v1',{p_business_id:ids[0],p_consultation_id:cid});check('new session recovers same receipt',recovered.tasks[0].submissions[0].token===receipt.token);
  const recoveredCase=await rpc(extra,'pbs_case_read_v1',{p_business_id:ids[0],p_case_id:caseSaved.case_id});check('new session recovers business context',recoveredCase.profile.goal===profile.goal);
  const recoveredDraft=await rpc(extra,'pbs_load_consultation_draft_v1',{p_business_id:ids[0],p_draft_id:draft.id,p_revision:null});check('new session recovers unchanged draft',recoveredDraft.payload.id===draft.id);
+ const freshReport=await rpc(extra,'pbs_assessment_report_v1',reportArgs);check('fresh session recovers same calculated report',freshReport.report_id===serverReport.report_id&&freshReport.duplicate===true);
  evidence.state=evidence.checks.every(c=>c.passed)?'PASS':'INCOMPLETE';if(evidence.state!=='PASS')process.exitCode=1;
 }catch(e){evidence.state='INCOMPLETE';evidence.failure=e.message;process.exitCode=1;}
 finally{for(const c of clients){const {error}=await c.auth.signOut({scope:'global'});evidence.cleanup.push({global_signout_requested:!error});c.auth.stopAutoRefresh();}credentials.length=0;fs.writeFileSync(process.env.PBS_EVIDENCE_PATH||'pbs-live-continuity-evidence.json',JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));}
