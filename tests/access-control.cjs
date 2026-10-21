@@ -15,11 +15,30 @@ function fixture(){let permitted=true,failure=false,signouts=0,clears=0,operatio
  // Exercise the real workspace clear handler after a loaded plan loses permission.
  const {window}=parseHTML(fs.readFileSync('consultation.html','utf8')),d=window.document;
  window.PBSConsultation=require('../pbs-consultation-engine');window.PBSPlan=require('../pbs-plan-engine');window.confirm=()=>true;
- f=fixture();window.PBSAccountClient=f.client;window.PBSAccess=A.create({client:f.client,onDenied:()=>{d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));d.dispatchEvent(new window.CustomEvent('pbs-access-denied'));}});window.PBSCloudDrafts={create:()=>({})};
+ f=fixture();window.PBSAccountClient=f.client;window.PBSAccess=A.create({client:f.client,onDenied:()=>{d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));d.dispatchEvent(new window.CustomEvent('pbs-access-denied'));}});const draftList=deferred();window.PBSCloudDrafts={create:()=>({list:()=>draftList.promise})};
  vm.runInNewContext(fs.readFileSync('consultation.js','utf8'),{window,document:d,crypto,Blob,URL,setTimeout});
  d.getElementById('sample').click();ok(!d.getElementById('workspace').hidden);ok(d.getElementById('tasks').children.length===4);
  d.getElementById('cloud-records').textContent='Previously loaded private draft';d.getElementById('business-select').append(d.createElement('option'));d.getElementById('account-controls').hidden=false;d.getElementById('sign-in').hidden=true;
  await window.PBSAccess.reject();ok(d.getElementById('workspace').hidden);ok(d.getElementById('tasks').children.length===0);ok(d.getElementById('cloud-records').children.length===0);ok(d.getElementById('business-select').children.length===0);ok(d.getElementById('account-controls').hidden);ok(!d.getElementById('sign-in').hidden);ok(d.getElementById('cloud-message').textContent.includes('saved records remain unchanged'));ok(window.PBSWorkspace.getCurrentDraft()===null);
+
+ // A file already being read must not restore private work after clearing.
+ const fileRead=deferred(),file=d.getElementById('plan-file');
+ const pendingFile=file.onchange({target:{files:[{size:100,text:()=>fileRead.promise}]}});
+ d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));
+ fileRead.resolve(JSON.stringify({business:'OLD PRIVATE FILE'}));await pendingFile;
+ ok(window.PBSWorkspace.getCurrentDraft()===null);ok(d.getElementById('workspace').hidden);
+ // An already authorized draft-list response must also be discarded after sign-out.
+ const select=d.getElementById('business-select');Object.defineProperty(select,'value',{configurable:true,value:'owned-business',writable:true});
+ const listRequest=d.getElementById('cloud-list').onclick();
+ d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));
+ draftList.resolve([{draft_id:'private-old-draft-id',revision:1}]);await listRequest;
+ ok(d.getElementById('cloud-records').children.length===0);
+ // Direct table reads can finish after access loss; their returned names must stay cleared.
+ const names=deferred();f.client.from=()=>({select:()=>({order:()=>({limit:()=>names.promise})})});
+ window.PBSAccess.reset();await window.PBSAccess.check();
+ const refresh=d.getElementById('refresh-businesses').onclick();await new Promise(r=>setImmediate(r));
+ await window.PBSAccess.reject();names.resolve({data:[{id:'old-id',legal_name:'OLD PRIVATE BUSINESS'}],error:null});await refresh;
+ ok(!select.textContent.includes('OLD PRIVATE BUSINESS'));ok(select.children.length===0);
  const paused=fs.readFileSync('account.html','utf8');ok(paused.includes('account access is temporarily paused'));ok(!paused.includes('<form'));ok(!paused.includes('vendor/pbs-account.js'));
  console.log(checks+' access-loss and account-pause checks passed (mocked transport and synthetic DOM; not recovery acceptance).');
 })().catch(e=>{console.error(e);process.exitCode=1;});
