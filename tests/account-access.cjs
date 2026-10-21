@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{parseHTML}=require('linkedom');let checks=0;const ok=x=>{assert.ok(x);checks++;};
 const source=fs.readFileSync('account-access.js','utf8');
 function setup(callback={},overrides={}){
- const {window}=parseHTML(fs.readFileSync('account.html','utf8')),d=window.document,calls=[];
+ const {window}=parseHTML(fs.readFileSync('tests/fixtures/account-recovery.html','utf8')),d=window.document,calls=[];
  window.PBSAccountCallback=callback;
  const auth={signUp:async x=>{calls.push(['signup',x]);return {data:{session:{}}};},resetPasswordForEmail:async(...x)=>{calls.push(['reset',...x]);return {};},verifyOtp:async x=>{calls.push(['otp',x]);return {data:{session:{}}};},setSession:async x=>{calls.push(['session',x]);return {data:{session:{}}};},getUser:async()=>({data:{user:{id:'user-a',email:'fictional@example.invalid'}}}),updateUser:async x=>{calls.push(['update',x]);return {};},signOut:async x=>{calls.push(['signout',x]);return {};}};
  Object.assign(auth,overrides);window.PBSAccountClient={auth};vm.runInNewContext(source,{window,document:d});
