@@ -25,7 +25,7 @@ function setup(callback={},overrides={}){
  x=setup({type:'email',token_hash:'fictional'});await x.d.getElementById('verify-account-link').onclick();ok(x.d.getElementById('account-new-password').hidden);ok(x.calls.some(c=>c[0]==='signout'));
  x=setup({type:'recovery',error:true,access_token:'fictional'});await x.d.getElementById('verify-account-link').onclick();ok(!x.calls.some(c=>c[0]==='session'));ok(!x.d.getElementById('account-reset-request').hidden);
  const unopened={type:'recovery',access_token:'unopened-a',refresh_token:'unopened-r'};x=setup(unopened);x.window.dispatchEvent(new x.window.Event('pagehide'));ok(unopened.access_token===null&&unopened.refresh_token===null);ok(x.d.getElementById('recovery-identity').textContent==='');
- ok(/persistSession:false/.test(fs.readFileSync('account-entry.js','utf8'))&&/detectSessionInUrl:false/.test(fs.readFileSync('account-entry.js','utf8')));
+ ok(fs.readFileSync('pbs-firebase-auth.mjs','utf8').includes('persistence:sdk.inMemoryPersistence')&&!fs.readFileSync('account-entry.js','utf8').includes('createClient'));
 
  // Requests begun before navigation must not revive a closed recovery page.
  const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};

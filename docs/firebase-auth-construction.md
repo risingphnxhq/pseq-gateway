@@ -1,20 +1,20 @@
-# Firebase account integration under construction
+# PBS Firebase workspace connection — construction
 
-The separate Firebase account adapter supports email/password signup, email verification, sign-in, password recovery, verification of action codes and in-memory sessions. It does not grant business ownership, paid access, quality approval or funding readiness.
+The consultation branch now uses Firebase email/password identity and a PBS-only server endpoint for its existing business, assessment, report, saved-plan, monthly-work and case services. Public main and its paused account page are unchanged. This branch remains unmerged and unreleased.
 
-`firebase-entry.mjs` imports only Firebase app/auth. Firebase is pinned to 13.1.0 in the lockfile. `pbs-firebase-config.mjs` contains public web configuration. No Analytics, Firestore, Firebase Hosting or Cloud Functions are initialized by this adapter.
+The account bundle initializes only Firebase app/auth, pinned to 13.1.0, with in-memory sessions. No Analytics, Firestore, Firebase Hosting or Cloud Functions are initialized. The PBS authorized domain was saved and observed in Firebase settings. Public web configuration is not an administrative credential.
 
-The adapter is deliberately not loaded by `account.html` or `consultation.html`. The public account page stays paused. Existing account scripts and saved-work ownership are unchanged. The adapter is not a drop-in replacement for the current account client: Firebase users require verified identity mapping and server authorization before they can use saved records.
+The endpoint independently verifies Google's signature, the fixed PBS issuer/audience, email verification and current account status. A private identity binding creates an internal UUID without linking records by email or importing legacy ownership. Product access defaults closed. Firebase is not registered as a project-wide trusted issuer in the shared Supabase project, and a generic authenticated role claim is not required by this endpoint. The unused backendToken method retains the stricter role check for the earlier direct-integration proposal; workspaceToken is the method used here.
 
-Local verification: 30 mocked-SDK checks exercise lifecycle requests, the fixed PBS callback, memory persistence, denial of wrong issuer/audience/subject/role, email-verification checks and late sign-in after page closure. A real Firebase SDK bundle compiles. These checks do not prove delivered emails, action-code acceptance or two-customer database access.
+firebase-workspace-client.mjs limits transport to the dedicated endpoint and a fixed set of PBS commands. Existing cloud-draft saves use the same transport. Browser credentials never go directly to the shared Data API. The server derives the owner from the verified token, reuses existing ledgers, preserves versions and receipts, and rejects customer-selected actor fields. Sign-out invalidates pending response display. No client can grant itself access or publish a quality decision.
 
-The public provider-configuration read confirmed Firebase project number 703846445166. Returned authorized domains were localhost and the two project Firebase default domains. Add pseq.risingphoenixhq.com through Firebase Authentication settings before testing PBS account email links. A successful provider read does not grant administrative Firebase access.
+Local verification: 390 checks including 31 mocked Firebase lifecycle checks and 19 mocked workspace transport checks. Server tests and rollback SQL fixtures are separate evidence. No mocked test proves delivered verification/reset emails, real verified-email customer access or two-customer browser acceptance.
 
-Before release: configure the authorized PBS domain and email-action handling; implement issuer-bound ownership mapping and authorized role-claim assignment without enabling paid services; verify the Supabase integration and model-service authentication; test normal signup, verification, sign-in, reset, expired/reused codes, two-customer access, refresh recovery and revocation. Never link historical ownership by email alone. Password reset completion is not reported as proof that every previously issued session was revoked.
+Release gates: normal signup and delivered email verification; reset with newest, expired and reused codes; two verified customers using their own accounts; saved assessment/report/plan/monthly work with refresh recovery; denied cross-customer requests; access revocation; mobile/keyboard/print acceptance. Public account access stays paused until these pass. Ordinary AI processing and quality publication remain off. No pricing or paid production approval is implied.
 
 Official references:
 - https://firebase.google.com/docs/auth/web/password-auth
 - https://firebase.google.com/docs/auth/web/manage-users
-- https://supabase.com/docs/guides/auth/third-party/firebase-auth
+- https://supabase.com/docs/guides/functions/auth
 
-Run `npm test` and `npm run check:firebase-build`. No provider account creation or email sending occurs in these tests.
+Run npm test and npm run build:account. No account creation, email sending or provider model call occurs in these local checks.

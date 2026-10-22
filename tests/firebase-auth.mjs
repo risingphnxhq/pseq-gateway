@@ -17,6 +17,7 @@ f.sdk.sendPasswordResetEmail=async()=>{throw Object.assign(Error('unknown'),{cod
 await bad(()=>a.inspectReset('invalid'),'INVALID_ACTION_CODE');ok((await a.inspectReset('valid')).email===f.user.email);
 await a.signIn({email:'fictional@example.invalid',password:'fictional-password-123'});ok(a.user().id==='firebase-not-a-uuid');ok(await a.backendToken()==='FAKE_TOKEN');
 for(const patch of [{iss:'https://securetoken.google.com/stats-core'},{aud:'wrong'},{sub:'another-user'},{role:'service_role'},{email_verified:false}]){f.claims(patch);await bad(()=>a.backendToken(),'not enabled');f.claims({iss:'https://securetoken.google.com/'+config.projectId,aud:config.projectId,sub:f.user.uid,role:'authenticated',email_verified:true});}
+f.claims({role:undefined});ok(await a.workspaceToken()==='FAKE_TOKEN');f.claims({role:'authenticated'});
 f.user.emailVerified=false;await bad(()=>a.backendToken(),'Verify');f.user.emailVerified=true;
 await bad(()=>a.confirmReset('invalid','fictional-password-123'),'INVALID_ACTION_CODE');
 ok((await a.confirmReset('valid','fictional-password-123')).other_sessions_revoked===false);ok(!a.user());
