@@ -16,7 +16,7 @@ export function createWorkspaceClient({account,fetcher=fetch}){
  const client={
   rpc(name,args={}){return RPC.has(name)?send(name,args):Promise.resolve(failure('PBS operation is unavailable.'));},
   auth:{
-   async signInWithPassword(credentials){generation++;try{return {data:{user:await (await account).signIn(credentials)},error:null};}catch{return failure('Sign-in was unsuccessful.',401,'42501');}},
+   async signInWithPassword(credentials){generation++;try{const a=await account,user=await a.signIn(credentials);if(!user.email_verified){await a.signOut();return failure('Verify your PBS email address before signing in. Request a new verification email from account setup if needed.',401,'PBS_EMAIL_VERIFICATION_REQUIRED');}return {data:{user},error:null};}catch{return failure('Sign-in was unsuccessful.',401,'42501');}},
    async getUser(){const a=await account,u=a.user();if(!u)return {data:{user:null},error:null};const result=await send('IDENTITY');return result.error?result:{data:{user:{...u,id:result.data.subject_id}},error:null};},
    async getSession(){try{return {data:{session:{access_token:await (await account).workspaceToken()}},error:null};}catch{return failure('PBS_AUTH_REQUIRED',401,'42501');}},
    async signOut(){generation++;await (await account).signOut();return {error:null};}

@@ -12,6 +12,7 @@ assert.throws(()=>validateFirebaseConfig({...config,projectId:'stats-core'}));ch
 let f=fixture(),a=await createFirebaseAccount({config,sdk:f.sdk,onCleared:f.clear});ok(f.calls[1][1]===f.sdk.inMemoryPersistence);
 await bad(()=>a.signUp({email:'fake',password:'short'}),'12');ok(!a.user());
 const signup=await a.signUp({email:'fictional@example.invalid',password:'fictional-password-123'});ok(signup.verification_requested&&!signup.delivery_confirmed);ok(!a.user());ok(f.calls.find(x=>x[0]==='verify')[1].url===PBS_ACCOUNT_URL);
+f.user.emailVerified=false;await a.requestVerification({email:'fictional@example.invalid',password:'fictional-password-123'});ok(!a.user());ok(f.calls.filter(c=>c[0]==='verify').length===2);f.user.emailVerified=true;
 await a.requestReset('fictional@example.invalid');ok(f.calls.find(x=>x[0]==='reset')[1].url===PBS_ACCOUNT_URL);
 f.sdk.sendPasswordResetEmail=async()=>{throw Object.assign(Error('unknown'),{code:'auth/user-not-found'});};ok((await a.requestReset('missing@example.invalid')).requested);
 await bad(()=>a.inspectReset('invalid'),'INVALID_ACTION_CODE');ok((await a.inspectReset('valid')).email===f.user.email);

@@ -12,4 +12,5 @@ r=await client.workspaceFetch('https://oyjmpbuxvfxusmbouldi.supabase.co/rest/v1/
 await assert.rejects(()=>client.workspaceFetch('https://evil.invalid/rest/v1/rpc/pbs_check_access_v1',{method:'POST',body:'{}'}));n++;
 ok(calls.every(c=>c.url.endsWith('/functions/v1/pbs-firebase-workspace')));ok(calls.every(c=>c.options.headers.Authorization==='Bearer fixture-token'));ok(!JSON.stringify(calls).includes('service_role'));
 release=true;const pending=client.rpc('pbs_check_access_v1');while(typeof release!=='function')await new Promise(r=>setImmediate(r));await client.auth.signOut();release();r=await pending;ok(r.status===401);ok(r.data===null);const previous=calls.length;r=await client.rpc('pbs_check_access_v1');ok(r.status===401);ok(calls.length===previous);
+const unverified=createWorkspaceClient({account:{...account,signIn:async()=>({email_verified:false})},fetcher:async()=>{throw Error('Must not send');}});r=await unverified.auth.signInWithPassword({});ok(r.error.code==='PBS_EMAIL_VERIFICATION_REQUIRED');ok(!signed);
 console.log(n+' PBS Firebase workspace transport checks passed (mocked transport).');

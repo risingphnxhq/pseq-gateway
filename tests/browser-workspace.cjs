@@ -31,6 +31,21 @@ async function until(expression){for(let i=0;i<100;i++){if(await evaluate(expres
  ok('browser produces nonempty print PDF at '+width,typeof pdf.data==='string'&&pdf.data.length>1000);
  ok('print completion clears temporary view at '+width,await evaluate("!document.getElementById('pbs-print-view')"));
  }
+ for(const width of [1280,390]){
+ await cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
+ await cdp('Page.navigate',{url:'http://127.0.0.1:8765/account-construction.html'});
+ await until("document.readyState==='complete' && typeof document.getElementById('signup-form').onsubmit==='function'");
+ ok('Firebase account forms initialize at '+width,await evaluate("!!document.getElementById('reset-request-form').onsubmit"));
+ ok('account has no horizontal overflow at '+width,await evaluate("document.documentElement.scrollWidth<=window.innerWidth+1"));
+ ok('account form controls have labels at '+width,await evaluate("[...document.querySelectorAll('input')].filter(e=>e.getClientRects().length).every(e=>e.labels?.length)"));
+ await evaluate("document.getElementById('signup-email').value='fictional@example.invalid';document.getElementById('signup-password').value='fictional-password-123';document.getElementById('signup-confirm').value='different-password';document.getElementById('signup-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))");
+ await until("document.getElementById('account-message').textContent.includes('must match')");
+ ok('account clears mismatched passwords at '+width,await evaluate("document.getElementById('signup-password').value==='' && document.getElementById('signup-confirm').value===''") );
+ }
+ await cdp('Page.navigate',{url:'http://127.0.0.1:8765/account-construction.html?mode=resetPassword&oobCode=FICTIONAL_BROWSER_FIXTURE'});
+ await until("document.readyState==='complete' && !document.getElementById('account-link').hidden");
+ ok('email code removed from browser address',await evaluate("location.search==='' && location.hash===''") );
+ ok('reset requires explicit action before new password',await evaluate("document.getElementById('account-new-password').hidden && document.getElementById('recovery-identity').textContent===''") );
  ok('no unhandled browser script exceptions',errors.length===0);
  console.log(JSON.stringify({type:'REAL_HEADLESS_CHROMIUM_LOCAL_SOURCE_SMOKE',checks,passed:checks,viewports:[1280,390],fictional_only:true,authenticated_browser_journey:false,visual_screenshot_review:false,external_sites_visited:false,errors}));
  }catch(e){console.error(e);process.exitCode=1;}finally{ws?.close();chrome?.kill();server?.close();}
