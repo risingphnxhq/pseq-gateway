@@ -1,3 +1,6 @@
+import continuity from './pbs-assessment-continuity.js';
+import consultation from './pbs-consultation-engine.js';
+import {mountMonthlyWorkTest} from './monthly-work-acceptance.mjs';
 import engine from './pbs-diagnostic-engine.js';
 import {mountSavedWorkTest} from './saved-work-acceptance.mjs';
 import {initializePBSFirebase} from './firebase-entry.mjs';
@@ -10,3 +13,5 @@ document.getElementById('sign-out').addEventListener('click',async()=>{await cli
 window.addEventListener('pagehide',()=>{document.getElementById('password').value='';void account.then(a=>a.close()).catch(()=>{});});
 
 mountSavedWorkTest({document,client,engine,storage:localStorage});
+
+mountMonthlyWorkTest({document,client,continuity,consultation,storage:localStorage});
