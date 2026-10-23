@@ -1,0 +1,10 @@
+// Fictional records for builder integration checks. No real credentials or customer data.
+const E=require('../pbs-diagnostic-engine'),P=require('../pbs-plan-engine'),C=require('../pbs-consultation-engine');
+module.exports=function(){
+ const input={mode:'PBRS',context:{business:'Fictional recovery business',stage:'operating',goal:'Recover the same saved work'},answers:Object.fromEntries(E.questions('full').map(q=>[q.id,2])),risks:Object.fromEntries(E.RISKS.map(r=>[r.id,false])),references:{}};input.answers.goal=null;
+ const assessment={id:'assessment-a',created_at:'2026-10-23T12:00:00Z',engine_version:'PBS-DRAFT-1.0.0',prs_payload:{record_type:'ASSESSMENT_DRAFT',method_version:E.VERSION,scored:false,input}};
+ const plan=C.create(P.makePlan({business:input.context.business,stage:'operating',goal:input.context.goal,owner:'Fictional owner',start:'2026-10-01',priorities:[{title:'Dated baseline',why:'Observe the starting position',action:'Record the actual dated baseline',record:'Baseline worksheet',measure:'Compare later observations',acceptance:'Dated baseline with owner'}],origin:{kind:'OPERATOR_AUTHORED',verification:'UNVERIFIED'}}),'2026-10');
+ const spec={title:'Fictional task',action:'Prepare the dated baseline',reason:'Observe actual results',owner:'Fictional owner',acceptance:'Date and source supplied',measure:'Actual against baseline',record:'Worksheet'};
+ const monthly={consultation_id:'month-a',business_id:'business-a',goal:input.context.goal,stage:'operating',month:'2026-10-01',revision:3,disclosure:{version:'FIXTURE-DISCLOSURE-1',text:'Fictional disclosure: a receipt does not approve quality or funding readiness.'},cycles:[{month:'2026-10-01',task_ids:[1,2,3,4].map(n=>'task-'+n)}],tasks:[1,2,3,4].map(n=>({id:'task-'+n,ordinal:n,specification:spec,status:n===1?'AWAITING_REVIEW':'UNSUBMITTED',submissions:n===1?[{id:'submission-a',token:'receipt-a',reference:'Fictional baseline',note:'Missing date; correction needed',attempt:1,submitted_at:'2026-10-23T12:00:00Z',disclosure_version:'FIXTURE-DISCLOSURE-1',acknowledged_at:'2026-10-23T12:00:00Z',quality_assessment:null}]:[]})),reassessments:[]};
+ return {assessment,plan,monthly};
+};

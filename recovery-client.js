@@ -1,0 +1,19 @@
+(function(){'use strict';
+const d=document,$=id=>d.getElementById(id),recovery=window.PBSOwnedRecovery.create({client:window.PBSAccountClient,onDenied:async()=>{if(window.PBSAccess?.reject)await window.PBSAccess.reject();else d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));}});let generation=0,busy=false;
+const node=(tag,text)=>{const e=d.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
+const panel=node('section');panel.id='owned-recovery';panel.className='card';panel.append(node('h2','Find and continue your saved work'),node('p','Sign in, find your businesses, then choose one below. Your saved answers, plans and monthly records stay online when you change devices. Only work saved online can be recovered.'));
+const status=node('p');status.id='recovery-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');const out=node('div');out.id='recovery-results';
+function clear(){generation++;recovery.clear();out.replaceChildren();status.textContent='';}
+async function run(fn){if(busy)return;busy=true;const g=generation;try{status.textContent='Finding your saved work…';await fn(g);}catch(e){if(g===generation){out.replaceChildren();status.textContent=e.message;}}finally{busy=false;}}
+function current(g,b){if(g!==generation||$('business-select').value!==b)throw Error('Business selection changed. Find its saved work again.');}
+function button(parent,label,fn){const b=node('button',label);b.type='button';b.onclick=()=>run(fn);parent.append(b);}
+button(panel,'Find my businesses',async g=>{const rows=await recovery.businesses();if(g!==generation)return;const select=$('business-select'),previous=select.value;select.replaceChildren(...rows.map(r=>{const o=node('option',r.legal_name);o.value=r.id;return o;}));if(rows.some(r=>r.id===previous))select.value=previous;select.dispatchEvent(new window.Event('change'));status.textContent=rows.length?'Choose your business, then find its saved work. Showing up to 100 most recent businesses.':'No owned business found.';});
+button(panel,'Find saved work for this business',async g=>{const b=$('business-select').value;if(!b)throw Error('Choose your business first.');const r=await recovery.discover(b);current(g,b);out.replaceChildren();
+ const answers=node('section');answers.append(node('h3','Saved assessments'));for(const s of r.assessments)button(answers,'Open assessment · '+s.created_at,async()=>{current(g,b);const snapshot=await recovery.assessment(b,s.id);current(g,b);d.dispatchEvent(new window.CustomEvent('pbs-recover-assessment',{detail:{business_id:b,snapshot}}));});
+ const plans=node('section');plans.append(node('h3','Saved plans'));for(const p of r.plans)button(plans,'Open plan · '+p.updated_at+' · version '+p.revision,async()=>{current(g,b);const saved=await recovery.plan(b,p.draft_id);current(g,b);d.dispatchEvent(new window.CustomEvent('pbs-recover-plan',{detail:{business_id:b,saved}}));});
+ const monthly=node('section');monthly.append(node('h3','Monthly work and receipts'));for(const m of r.monthly)button(monthly,m.goal+' · '+m.month.slice(0,7),async()=>{current(g,b);const saved=await recovery.monthly(b,m.consultation_id);current(g,b);d.dispatchEvent(new window.CustomEvent('pbs-recover-monthly',{detail:{business_id:b,saved}}));});
+ out.append(answers,plans,monthly);status.textContent=r.assessments.length+' assessments, '+r.plans.length+' plans and '+r.monthly.length+' monthly records found (up to 100 of each). Choose a saved plan or monthly consultation to continue.';
+});
+panel.append(status,out);$('server-execution').before(panel);
+$('business-select').addEventListener('change',clear);$('sign-in').addEventListener('submit',clear);$('sign-out').addEventListener('click',clear);for(const name of ['pbs-account-signed-out','pbs-business-context-changed','pbs-access-denied'])d.addEventListener(name,clear);window.addEventListener('pagehide',clear);
+})();

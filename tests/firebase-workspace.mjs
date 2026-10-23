@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {createWorkspaceClient} from '../firebase-workspace-client.mjs';
+let n=0,calls=[],signed=true,release;const ok=x=>{assert.ok(x);n++;};
+const account={user:()=>signed?{id:'firebase-sub',email:'fixture@example.invalid',email_verified:true}:null,workspaceToken:async()=>'fixture-token',signIn:async()=>{signed=true;return account.user();},signOut:async()=>{signed=false;}};
+const client=createWorkspaceClient({account,fetcher:async(url,options)=>{calls.push({url,options});if(release)await new Promise(r=>release=r);const op=JSON.parse(options.body).operation;return Response.json(op==='IDENTITY'?{subject_id:'canonical-fixture'}:op==='BUSINESSES'?[{id:'business',legal_name:'Fixture'}]:true);}});
+let r=await client.auth.getUser();ok(r.data.user.id==='canonical-fixture');ok(r.data.user.email==='fixture@example.invalid');
+r=await client.from('pbs_entities').select('id,legal_name').order('created_at',{ascending:false}).limit(100);ok(r.data[0].id==='business');
+await client.from('pbs_prs_snapshots').select('id,created_at,engine_version,prs_payload').eq('entity_id','business').eq('engine_version','PBS-DRAFT-1.0.0').order('created_at',{ascending:false}).limit(100);ok(JSON.parse(calls.at(-1).options.body).arguments.p_business_id==='business');
+const before=calls.length;ok(!!(await client.rpc('unrelated_system',{})).error);ok(!!(await client.from('unrelated_records').select('*')).error);ok(!!(await client.functions.invoke('executive-service',{body:{}})).error);ok(calls.length===before);
+await client.functions.invoke('pbs-consultation',{body:{operation:'READ',business_id:'business'}});ok(JSON.parse(calls.at(-1).options.body).operation==='CONSULTATION');
+r=await client.workspaceFetch('https://oyjmpbuxvfxusmbouldi.supabase.co/rest/v1/rpc/pbs_list_consultation_drafts_v1',{method:'POST',body:'{"p_business_id":"business"}'});ok(r.ok);ok(await r.json());
+await assert.rejects(()=>client.workspaceFetch('https://evil.invalid/rest/v1/rpc/pbs_check_access_v1',{method:'POST',body:'{}'}));n++;
+ok(calls.every(c=>c.url.endsWith('/functions/v1/pbs-firebase-workspace')));ok(calls.every(c=>c.options.headers.Authorization==='Bearer fixture-token'));ok(!JSON.stringify(calls).includes('service_role'));
+release=true;const pending=client.rpc('pbs_check_access_v1');while(typeof release!=='function')await new Promise(r=>setImmediate(r));await client.auth.signOut();release();r=await pending;ok(r.status===401);ok(r.data===null);const previous=calls.length;r=await client.rpc('pbs_check_access_v1');ok(r.status===401);ok(calls.length===previous);
+const unverified=createWorkspaceClient({account:{...account,signIn:async()=>({email_verified:false})},fetcher:async()=>{throw Error('Must not send');}});r=await unverified.auth.signInWithPassword({});ok(r.error.code==='PBS_EMAIL_VERIFICATION_REQUIRED');ok(!signed);
+console.log(n+' PBS Firebase workspace transport checks passed (mocked transport).');
