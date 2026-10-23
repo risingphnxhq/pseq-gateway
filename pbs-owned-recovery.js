@@ -18,6 +18,7 @@ function create({client}){
    check(g);if(![assessments,plans,monthly].every(Array.isArray))throw Error('Saved work discovery was incomplete.');
    return {business:b,assessments,plans,monthly};
   },
+  async assessment(b,id){const g=await start();await owned(b,g);const rows=await result(client.from('pbs_prs_snapshots').select('id,created_at,engine_version,prs_payload').eq('entity_id',b).eq('engine_version','PBS-DRAFT-1.0.0').order('created_at',{ascending:false}).limit(100),g);const saved=Array.isArray(rows)&&rows.find(x=>x.id===id);if(!saved)throw Error('This saved assessment is not available.');return saved;},
   async plan(b,id){const g=await start();await owned(b,g);const rows=await rpc('pbs_list_consultation_drafts_v1',{p_business_id:b},g);if(!Array.isArray(rows)||!rows.some(x=>x.draft_id===id))throw Error('This saved plan is not available.');const saved=await rpc('pbs_load_consultation_draft_v1',{p_business_id:b,p_draft_id:id,p_revision:null},g);if(saved?.payload?.id!==id)throw Error('The saved plan identity did not match.');return saved;},
   async monthly(b,id){const g=await start();await owned(b,g);const r=await rpc('pbs_execution_read_v1',{p_business_id:b,p_consultation_id:id},g);if(r?.business_id!==b||r?.consultation_id!==id)throw Error('The monthly record identity did not match.');return r;}
  };

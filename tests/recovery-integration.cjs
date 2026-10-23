@@ -1,0 +1,20 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{parseHTML}=require('linkedom'),records=require('./recovery-fixture.cjs')();
+const {window}=parseHTML(fs.readFileSync('consultation.html','utf8')),d=window.document;window.confirm=()=>true;
+Object.defineProperty(window.HTMLSelectElement.prototype,'value',{configurable:true,get(){return this._testValue??this.querySelector('option')?.value??'';},set(value){this._testValue=value;}});d.getElementById('business-select').value='business-a';
+let deny=false,calls=[],n=0;const ok=x=>{assert.ok(x);n++;};
+window.PBSAccountClient={auth:{getUser:async()=>({data:{user:{id:'owner-a'}}})},from(table){return {select(){return this;},eq(){return this;},order(){return this;},limit(){return Promise.resolve(deny?{error:{code:'42501'}}:{data:table==='pbs_entities'?[{id:'business-a',legal_name:'Fictional recovery business'}]:[records.assessment]});}};},rpc:async(name,args)=>{calls.push(name);if(deny)return {error:{code:'42501'}};return {data:name==='pbs_list_consultation_drafts_v1'?[{draft_id:records.plan.id,revision:2,updated_at:'2026-10-23T12:00:00Z'}]:name==='pbs_load_consultation_draft_v1'?{payload:records.plan,revision:2,current_revision:2}:args.p_consultation_id?records.monthly:[{consultation_id:'month-a',goal:'Fictional recovery business',month:'2026-10-01'}]};}};
+for(const [key,file]of Object.entries({PBSPlan:'pbs-plan-engine',PBSConsultation:'pbs-consultation-engine',PBSDiagnostic:'pbs-diagnostic-engine',PBSAssessmentContinuity:'pbs-assessment-continuity',PBSOwnedRecovery:'pbs-owned-recovery'}))window[key]=require('../'+file);
+window.PBSCloudDrafts={create:()=>({})};
+const context={window,document:d,crypto,structuredClone,Blob,URL,setTimeout};
+for(const file of ['consultation.js','assessment-client.js','execution-client.js','recovery-client.js'])vm.runInNewContext(fs.readFileSync(file,'utf8'),context);
+(async()=>{
+ const panel=d.getElementById('owned-recovery');await panel.querySelectorAll('button')[1].onclick();let actions=d.querySelectorAll('#recovery-results button');ok(actions.length===3);
+ await actions[0].onclick();ok(d.getElementById('assessment-goal').value==='Recover the same saved work');ok(d.getElementById('assessment-answer-goal').value==='unknown');
+ await actions[1].onclick();ok(!d.getElementById('workspace').hidden);ok(d.querySelectorAll('#tasks article').length===4);ok(window.PBSWorkspace.getCurrentDraft().id===records.plan.id);
+ await actions[2].onclick();ok(d.querySelectorAll('#execution-record article').length===4);ok(d.querySelectorAll('#execution-record .receipt').length===1);ok(d.getElementById('execution-record').textContent.includes('receipt-a'));ok(d.getElementById('execution-record').textContent.includes('Quality unassessed'));
+ ok([...d.querySelectorAll('#execution-record input[type=checkbox]')].every(x=>!x.checked));ok(!calls.some(x=>/command|save|create/.test(x)));
+ const before=window.PBSWorkspace.getCurrentDraft().id;window.confirm=()=>false;await actions[1].onclick();ok(window.PBSWorkspace.getCurrentDraft().id===before);
+ deny=true;await actions[0].onclick();ok(d.getElementById('recovery-results').textContent==='');
+ d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));ok(d.getElementById('execution-record').textContent==='');ok(d.querySelectorAll('#tasks article').length===0);ok(d.getElementById('assessment-goal').value==='');
+ console.log(n+' recovery-to-existing-screen integration checks passed (mocked services, synthetic DOM).');
+})().catch(e=>{console.error(e);process.exitCode=1;});

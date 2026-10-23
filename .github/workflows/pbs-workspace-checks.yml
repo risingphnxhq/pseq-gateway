@@ -51,6 +51,8 @@ jobs:
           node-version: '22'
       - name: Check workspace in real headless Chrome
         run: node tests/browser-workspace.cjs
+      - name: Verify owned recovery in Chrome with simulated services
+        run: node tests/browser-owned-recovery.cjs
   account-settings:
     runs-on: ubuntu-latest
     timeout-minutes: 2

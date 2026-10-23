@@ -11,3 +11,11 @@ Account/business/access changes clear discovery results and invalidate in-flight
 Run node tests/owned-recovery.cjs and npm test. The added suite covers fresh instances without local references, receipt/task identity preservation, another owner denial, missing authentication, access errors and delayed-response cancellation, plus synthetic-DOM event integration. These are builder checks, not live backend, independent assurance or Gate3 PASS.
 
 No main merge, deployment, PR13 release, AI activation, quality publication, paid access or commercial terms are authorized by this construction change. Existing public account pause and header remain. Gate2 remains IN_PROGRESS until applicable physical evidence is accepted.
+
+## Continued construction
+
+Opening an assessment now performs a fresh authenticated ownership check and retrieves the selected saved snapshot again. A cached discovery listing alone cannot open an assessment after access is revoked. Plan and monthly recovery already perform fresh server reads.
+
+The focused recovery suite has26checks. A further17integration checks load the actual assessment, plan and execution screens together and prove recovered answers (including unknown), the same saved plan, four monthly tasks, the existing receipt and unassessed quality, no inferred acknowledgment, no write calls, declined replacement, denial and sign-out clearing. Services and DOM remain simulated.
+
+The preceding commit9f44e0e completed hosted workspace checks successfully (runs39992755184 and39992746357), including real headless Chrome initialization. No Chrome executable is available in the current local runtime, so the new screen integration has not been represented as a real-browser or live-account pass.
