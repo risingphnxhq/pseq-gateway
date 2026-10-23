@@ -25,4 +25,13 @@ ok((await a.confirmReset('valid','fictional-password-123')).other_sessions_revok
 ok((await a.verifyEmail('valid')).email_verified);await bad(()=>a.verifyEmail('invalid'),'INVALID_ACTION_CODE');
 await a.close();ok(a.user()===null);await bad(()=>a.signIn({}),'closed');
 f=fixture();a=await createFirebaseAccount({config,sdk:f.sdk,onCleared:f.clear});let release;f.wait(new Promise(r=>release=r));const pending=a.signIn({email:'fictional@example.invalid',password:'fictional-password-123'});await a.close();release();await bad(()=>pending,'page changed');ok(!f.auth.currentUser);ok(f.clears()>0);
+// A recovery check may finish after the page closes or the account signs out.
+// Neither case may initiate a password change after that cancellation.
+for(const cancel of ['close','signOut']){
+ f=fixture();a=await createFirebaseAccount({config,sdk:f.sdk,onCleared:f.clear});
+ let finishCheck;f.sdk.verifyPasswordResetCode=()=>new Promise(r=>finishCheck=r);
+ const reset=a.confirmReset('valid','fictional-password-123');
+ await new Promise(r=>setImmediate(r));await a[cancel]();finishCheck(f.user.email);
+ await bad(()=>reset,'page changed');ok(!f.calls.some(c=>c[0]==='confirmed'));
+}
 console.log(checks+' Firebase adapter checks passed (mocked SDK; not live signup/email/recovery acceptance).');

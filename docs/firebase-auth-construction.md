@@ -18,3 +18,9 @@ Official references:
 - https://supabase.com/docs/guides/functions/auth
 
 Run npm test and npm run build:account. No account creation, email sending or provider model call occurs in these local checks.
+
+## Recovery cancellation correction — October 22, 2026
+
+The account adapter now rechecks its page/session generation after the asynchronous recovery-code validation and before submitting a password change. Closing the page or signing out during that validation prevents the later password-change request. Password validation also happens before the provider lookup. An already-submitted provider request cannot be cancelled by closing the page; no such cancellation is claimed.
+
+Four additional mocked assertions cover close and sign-out during the pending code check. These verify the adapter boundary, not delivered emails or an actual password reset. The owner-controlled verification/reset email, live verified-email saved-work flow, two-customer isolation and revocation acceptance remain open. The public account page and paid access hold are unchanged.
