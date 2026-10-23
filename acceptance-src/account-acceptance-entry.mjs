@@ -1,3 +1,5 @@
+import engine from './pbs-diagnostic-engine.js';
+import {mountSavedWorkTest} from './saved-work-acceptance.mjs';
 import {initializePBSFirebase} from './firebase-entry.mjs';
 import config from './pbs-firebase-config.mjs';
 import {createWorkspaceClient} from './firebase-workspace-client.mjs';
@@ -6,3 +8,5 @@ const form=document.getElementById('sign-in'),status=document.getElementById('st
 form.addEventListener('submit',async e=>{e.preventDefault();const email=document.getElementById('email').value.trim();let password=document.getElementById('password').value;document.getElementById('password').value='';const button=form.querySelector('button');button.disabled=true;status.textContent='Checking your PBS account…';try{const signed=await client.auth.signInWithPassword({email,password});password='';if(signed.error)throw Error(signed.error.message);const verified=await client.auth.getUser();if(verified.error){await client.auth.signOut();throw Error('Your credentials were accepted, but the PBS server check failed: '+verified.error.message);}if(!verified.data?.user?.id)throw Error('PBS identity could not be confirmed.');status.textContent='PBS sign-in, verified email and server identity confirmed. This test does not activate paid access.';document.getElementById('sign-out').hidden=false;}catch(e){status.textContent=e.message||'The account check could not be confirmed.';}finally{password='';button.disabled=false;}});
 document.getElementById('sign-out').addEventListener('click',async()=>{await client.auth.signOut();status.textContent='Signed out.';document.getElementById('sign-out').hidden=true;});
 window.addEventListener('pagehide',()=>{document.getElementById('password').value='';void account.then(a=>a.close()).catch(()=>{});});
+
+mountSavedWorkTest({document,client,engine,storage:localStorage});
