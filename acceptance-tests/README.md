@@ -1,0 +1,13 @@
+# Isolated PBS monthly-work acceptance
+
+Extends the existing noindex account-acceptance.html page. Uses the existing PBS-owned business, unscored assessment, calculated report, versioned consultation drafts and monthly execution ledgers. Does not open account.html, grant access, activate AI, publish quality or charge money.
+
+Prerequisite: the existing fictional assessment reference from the same browser and owning verified account. Prepare builds a resource-aware plan using the existing public continuity/advisor/plan engines, saves that draft and registers four stripped task specifications. Recover compares the saved plan and stable server task identities. Submission requires an explicit acknowledgment of the currently displayed server disclosure. The correction retains the first receipt on the same task, and the retry check requires the identical submission/token without another attempt.
+
+The browser stores test IDs, request IDs and the generated fictional plan fixture to permit identical retries after a partial failure. It stores no credentials. This is an acceptance harness, not the released customer workspace. It refuses to build from an assessment not labeled Fictional PBS account acceptance. Ownership and permissions remain server decisions.
+
+The server alone decides whether a later month is eligible. Future/current/unavailable months must leave the cycle unchanged. A rejected month is explicitly not a carry-forward pass. No quality judgment or independent business outcome is inferred from a receipt or correction.
+
+Run npm ci --ignore-scripts --prefix acceptance-tests, then npm test --prefix acceptance-tests. Build with the pinned esbuild via NODE_PATH=acceptance-tests/node_modules acceptance-tests/node_modules/.bin/esbuild acceptance-src/account-acceptance-entry.mjs --bundle --minify --format=iife --outfile=vendor/pbs-account-acceptance.js --legal-comments=linked. The workflow verifies the committed bundle and runs real headless Chrome at desktop/mobile widths without account creation or external model calls.
+
+34 local mocked-service/synthetic-DOM checks pass. Hosted browser and real authenticated monthly journey require observed results. Existing PSC085 proves actual saved-assessment/report recovery, refresh recovery and access revocation only. Two-customer isolation, actual plan/monthly recovery and eligible-month carry-forward are not established by this source change.

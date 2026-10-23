@@ -1,0 +1,1 @@
+{"private":true,"scripts":{"test":"node monthly-work.mjs"},"devDependencies":{"esbuild":"0.25.11","linkedom":"0.18.12","firebase":"13.1.0"}}
