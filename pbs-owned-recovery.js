@@ -1,11 +1,11 @@
 /* PBS-BCR-PRODUCTION-RECOVERY-000001: read-only, authenticated discovery. */
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.PBSOwnedRecovery=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){'use strict';
-function create({client}){
+function create({client,onDenied=()=>{}}){
  let generation=0;
  const clear=()=>{generation++;};
- async function start(){const g=generation,r=await client.auth.getUser();check(g);if(r.error||!r.data?.user?.id)throw Error('Sign in to recover your saved work.');return g;}
+ async function start(){const g=generation,r=await client.auth.getUser();check(g);if(r.error||!r.data?.user?.id){clear();await onDenied();throw Error('Sign in to recover your saved work.');}return g;}
  function check(g){if(g!==generation)throw Error('Account or business changed. Find your saved work again.');}
- async function result(request,g){const r=await request;check(g);if(r.error)throw Error('Saved work could not be confirmed. Check your access and try again.');return r.data;}
+ async function result(request,g){const r=await request;check(g);if(r.error){if(r.status===401||r.status===403||r.error.code==='42501'){clear();await onDenied();}throw Error('Saved work could not be confirmed. Check your access and try again.');}return r.data;}
  async function rpc(name,args,g){return result(client.rpc(name,args),g);}
  async function owned(b,g){const rows=await result(client.from('pbs_entities').select('id,legal_name').order('created_at',{ascending:false}).limit(100),g);if(!Array.isArray(rows)||!rows.some(x=>x.id===b))throw Error('This business is not available to this account.');}
  return {clear,

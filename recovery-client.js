@@ -1,5 +1,5 @@
 (function(){'use strict';
-const d=document,$=id=>d.getElementById(id),recovery=window.PBSOwnedRecovery.create({client:window.PBSAccountClient});let generation=0,busy=false;
+const d=document,$=id=>d.getElementById(id),recovery=window.PBSOwnedRecovery.create({client:window.PBSAccountClient,onDenied:async()=>{if(window.PBSAccess?.reject)await window.PBSAccess.reject();else d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));}});let generation=0,busy=false;
 const node=(tag,text)=>{const e=d.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
 const panel=node('section');panel.id='owned-recovery';panel.className='card';panel.append(node('h2','Find and continue your saved work'),node('p','Sign in, find your businesses, then choose one below. Your saved answers, plans and monthly records stay online when you change devices. Only work saved online can be recovered.'));
 const status=node('p');status.id='recovery-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');const out=node('div');out.id='recovery-results';

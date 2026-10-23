@@ -14,7 +14,7 @@ for(const file of ['consultation.js','assessment-client.js','execution-client.js
  await actions[2].onclick();ok(d.querySelectorAll('#execution-record article').length===4);ok(d.querySelectorAll('#execution-record .receipt').length===1);ok(d.getElementById('execution-record').textContent.includes('receipt-a'));ok(d.getElementById('execution-record').textContent.includes('Quality unassessed'));
  ok([...d.querySelectorAll('#execution-record input[type=checkbox]')].every(x=>!x.checked));ok(!calls.some(x=>/command|save|create/.test(x)));
  const before=window.PBSWorkspace.getCurrentDraft().id;window.confirm=()=>false;await actions[1].onclick();ok(window.PBSWorkspace.getCurrentDraft().id===before);
- deny=true;await actions[0].onclick();ok(d.getElementById('recovery-results').textContent==='');
+ deny=true;await actions[0].onclick();ok(d.getElementById('recovery-results').textContent==='');ok(d.getElementById('execution-record').textContent==='');ok(d.querySelectorAll('#tasks article').length===0);ok(d.getElementById('assessment-goal').value==='');
  d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));ok(d.getElementById('execution-record').textContent==='');ok(d.querySelectorAll('#tasks article').length===0);ok(d.getElementById('assessment-goal').value==='');
  console.log(n+' recovery-to-existing-screen integration checks passed (mocked services, synthetic DOM).');
 })().catch(e=>{console.error(e);process.exitCode=1;});

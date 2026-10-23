@@ -16,6 +16,8 @@ No main merge, deployment, PR13 release, AI activation, quality publication, pai
 
 Opening an assessment now performs a fresh authenticated ownership check and retrieves the selected saved snapshot again. A cached discovery listing alone cannot open an assessment after access is revoked. Plan and monthly recovery already perform fresh server reads.
 
-The focused recovery suite has26checks. A further17integration checks load the actual assessment, plan and execution screens together and prove recovered answers (including unknown), the same saved plan, four monthly tasks, the existing receipt and unassessed quality, no inferred acknowledgment, no write calls, declined replacement, denial and sign-out clearing. Services and DOM remain simulated.
+The focused recovery suite has26checks. A further20integration checks load the actual assessment, plan and execution screens together and prove recovered answers (including unknown), the same saved plan, four monthly tasks, the existing receipt and unassessed quality, no inferred acknowledgment, no write calls, declined replacement, denial and sign-out clearing. Services and DOM remain simulated.
 
 The preceding commit9f44e0e completed hosted workspace checks successfully (runs39992755184 and39992746357), including real headless Chrome initialization. No Chrome executable is available in the current local runtime, so the new screen integration has not been represented as a real-browser or live-account pass.
+
+Authorization errors during recovery now invoke the existing access-denied cleanup immediately, clearing the recovered assessment, working plan and monthly record together. Missing authentication does the same. This closes the interval where only the discovery list cleared while a previously opened private screen remained visible. The added Chrome test uses the actual screens and source with simulated services and blocks external requests; it is not live customer acceptance.
