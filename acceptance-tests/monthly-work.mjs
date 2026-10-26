@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';import fs from 'node:fs';import {createR
 const require=createRequire(import.meta.url),{parseHTML}=require('linkedom'),E=require('../acceptance-src/pbs-diagnostic-engine.js'),B=require('../acceptance-src/pbs-assessment-continuity.js'),C=require('../acceptance-src/pbs-consultation-engine.js');
 import {mountMonthlyWorkTest} from '../acceptance-src/monthly-work-acceptance.mjs';
 let n=0;const ok=x=>{assert.ok(x);n++;};
-function fixture(){const {window}=parseHTML(fs.readFileSync(new URL('../account-acceptance.html',import.meta.url),'utf8')),d=window.document,$=id=>d.getElementById(id),data=new Map(),storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},base={owner:'owner-A',business:'business-A',snapshot:'snapshot-A'};storage.setItem('pbs-acceptance-reference-v1',JSON.stringify(base));let subject='owner-A',draft=null,record=null,calls=[],requests=new Map(),next=0,failAfterSave=false,rejectAccess=false,lookupDelay=null;
+function fixture(){const {window}=parseHTML(fs.readFileSync(new URL('../account-acceptance.html',import.meta.url),'utf8')),d=window.document,$=id=>d.getElementById(id),data=new Map(),storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},base={owner:'owner-A',business:'business-A',snapshot:'snapshot-A'};storage.setItem('pbs-acceptance-reference-v1',JSON.stringify(base));let subject='owner-A',draft=null,record=null,calls=[],requests=new Map(),next=0,failAfterSave=false,rejectAccess=false,lookupDelay=null,reordered=false,changed=false;
  const input={mode:'PBRS',context:{business:'Fictional PBS account acceptance',stage:'operating',goal:'Test saved-work continuity; fictional data only'},answers:Object.fromEntries(E.questions('full').map(q=>[q.id,2])),risks:Object.fromEntries(E.RISKS.map(r=>[r.id,false])),references:{}};input.answers.goal=null;
  const client={auth:{getUser:async()=>({data:{user:{id:subject}}})},rpc:async(name,args)=>{calls.push({name,args:structuredClone(args)});if(lookupDelay){await lookupDelay;lookupDelay=null;}if(rejectAccess)return {error:{code:'42501',message:'PBS_ACCESS_NOT_ENABLED'}};
   const result=x=>({data:structuredClone(x),error:null}),error=(code,message)=>({data:null,error:{code,message}});
   if(name==='pbs_assessment_report_v1')return result({report:{source_snapshot_id:base.snapshot,input}});
   if(name==='pbs_save_consultation_draft_v1'){if(!draft)draft=structuredClone(args.p_payload);if(failAfterSave){failAfterSave=false;throw Error('Network interrupted after commit');}return result({revision:1,current_revision:1});}
-  if(name==='pbs_load_consultation_draft_v1')return result({payload:draft,revision:1,current_revision:1});
+  if(name==='pbs_load_consultation_draft_v1'){const reorder=v=>!v||typeof v!=='object'?v:Array.isArray(v)?v.map(reorder):Object.fromEntries(Object.entries(v).reverse().map(([k,x])=>[k,reorder(x)]));const payload=reordered?reorder(draft):structuredClone(draft);if(changed)payload.goal='An actually different saved business goal';return result({payload,revision:1,current_revision:1});}
   if(name==='pbs_execution_read_v1')return result(record);
   if(name!=='pbs_execution_command_v1')throw Error('Unexpected route');
   if(requests.has(args.p_request_id))return result(requests.get(args.p_request_id));const a=args.p_arguments;let response;
@@ -19,9 +19,10 @@ function fixture(){const {window}=parseHTML(fs.readFileSync(new URL('../account-
   requests.set(args.p_request_id,response);return result(response);
  }};
  const api=mountMonthlyWorkTest({document:d,client,continuity:B,consultation:C,storage,uuid:()=>String(++next),now:()=>new Date('2026-10-23T14:00:00Z')});
- return {$,d,window,client,storage,api,calls,base,message:()=>$('monthly-status').textContent,record:()=>record,subject:x=>subject=x,failSave:()=>failAfterSave=true,deny:()=>rejectAccess=true,delay:p=>lookupDelay=p};
+ return {$,d,window,client,storage,api,calls,base,message:()=>$('monthly-status').textContent,record:()=>record,subject:x=>subject=x,failSave:()=>failAfterSave=true,deny:()=>rejectAccess=true,delay:p=>lookupDelay=p,reorder:()=>reordered=true,changePlan:()=>changed=true};
 }
 let f=fixture();await f.$('prepare-monthly').onclick();ok(f.message().startsWith('PASS'));ok(f.record().tasks.length===4);ok(f.record().tasks.every(t=>t.status==='UNSUBMITTED'));ok(f.$('monthly-disclosure').textContent.includes('Inadequate work'));
+f.reorder();await f.$('recover-monthly').onclick();ok(f.message().startsWith('PASS'));f.changePlan();await f.$('recover-monthly').onclick();ok(f.message().includes('differs'));f=fixture();await f.$('prepare-monthly').onclick();
 const start=f.calls.find(x=>x.args.p_command==='START');ok(start.args.p_arguments.tasks.every(t=>!Object.hasOwn(t,'credit')&&!Object.hasOwn(t,'quality')));ok(JSON.parse(f.storage.getItem('pbs-monthly-acceptance-reference-v1')).payload.legacy_plan_record.origin.snapshot_id==='snapshot-A');
 await f.$('submit-monthly').onclick();ok(f.message().includes('explicitly acknowledge'));ok(f.record().tasks[0].submissions.length===0);
 f.$('monthly-ack').checked=true;await f.$('submit-monthly').onclick();ok(f.message().startsWith('PASS'));ok(f.record().tasks[0].submissions.length===1);ok(!f.$('monthly-ack').checked);const receipt=f.record().tasks[0].submissions[0].token;
