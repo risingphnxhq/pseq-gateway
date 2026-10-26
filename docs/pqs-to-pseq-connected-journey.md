@@ -1,0 +1,13 @@
+# PQS to PSEQ connected customer journey
+
+Existing PBS V1 objectives01–04,06–08; BOAS-ROOT-RPE-SYS-PBS-001/version1.0.0/PBS-ACCEPTANCE-REV-001. Billing excluded. Draft source, not a release or independent acceptance.
+
+The customer workspace supports one owned-business journey:save PQS answers and a source-bound calculated report; expand to PBRS with shared answers/references retained and additional questions unknown; save the deeper snapshot/report; create a resource-aware PBB plan; save that plan; register four PSEQ tasks; prepare work, acknowledge disclosure, receive an inadequate-work receipt, correct the same task and recover all saved history. Unresolved work carries forward only into an eligible month.
+
+A connected synthetic run found the PQS form passed the label PQS to a diagnostic question function expecting quick. That produced24questions and failed quick-check validation. The UI now explicitly maps PQS/quick and PBRS/full. Depth changes invalidate the report source and retain only matching answers/references. Saved historical snapshots remain separate.
+
+Registered tasks now provide an optional working procedure/worksheet:responsible person, inputs, ordered steps, exceptions, measurement and observed result/unknowns. Task requirements supply the known owner/input/measurement prompts. Missing-field feedback identifies gaps; it does not assess substantive quality. Copying the worksheet only fills the unsent submission and resets acknowledgment. Unknowns may remain in an inadequate submission; original receipts persist. Overlength text is not silently truncated. Unconfirmed submissions cannot be silently replaced. A correction can begin from the exact latest submitted text.
+
+The connected private test executes actual create-business, assessment-save, SQL calculator/report, versioned-plan and monthly-ledger functions through the Firebase transport/handler/dispatcher. It uses local identity signatures and mocked Google lookup, synthetic DOM and isolated PostgreSQL17.5; production is17.6. No canned assessment report is supplied. It verifies the complete saved workflow and second-owner denial. Earlier months are local fixture setup only. This proves the tested construction workflow, not deployed four-site navigation, real provider behavior, model-advice quality or independent work acceptance.
+
+Local suite includes10depth/save regressions and23worksheet/correction checks. Hosted Chrome exercises quick/deeper question counts and answer carryover, worksheet feedback/copy/correction, keyboard recovery/download and print at desktop/mobile widths using simulated services. No paid model calls, pricing, charges, customer processing/quality activation or backend deployment.
