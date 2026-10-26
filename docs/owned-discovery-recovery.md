@@ -21,3 +21,11 @@ The focused recovery suite has26checks. A further20integration checks load the a
 The preceding commit9f44e0e completed hosted workspace checks successfully (runs39992755184 and39992746357), including real headless Chrome initialization. No Chrome executable is available in the current local runtime, so the new screen integration has not been represented as a real-browser or live-account pass.
 
 Authorization errors during recovery now invoke the existing access-denied cleanup immediately, clearing the recovered assessment, working plan and monthly record together. Missing authentication does the same. This closes the interval where only the discovery list cleared while a previously opened private screen remained visible. The added Chrome test uses the actual screens and source with simulated services and blocks external requests; it is not live customer acceptance.
+
+## October26 continuation
+
+Founder directed completion of PBS V1 and that billing be tested separately. This defers billing testing, not authentication, ownership, task quality, independent acceptance or live-charge safeguards. Paid billing acceptance is not claimed.
+
+Completed and earlier monthly task history now displays every retained receipt, correction note and recorded quality result rather than only counting attempts. Current and historic tasks show their responsible person, finished-work requirements and supporting record. The later-month instruction now requires a later month that has begun. Sixteen focused history checks preserve both old receipts, render text safely, leave disclosure unchecked, perform no writes and clear private history at sign-out.
+
+Current main3326c5da adds11 acceptance-page files after the earlier common baseline8e226da7. None exists in construction head07f339ad; the draft reconciliation preserves each current main blob exactly and records both parent commits. It does not merge the draft into main, expose consultation, deploy anything, alter access or override the release hold.
