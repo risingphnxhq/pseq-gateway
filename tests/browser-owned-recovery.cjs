@@ -25,7 +25,7 @@ window.PBSAccountClient={auth:{getUser:async()=>({data:{user:{id:window.fixtureO
   await check('recovered monthly keyboard focus '+width,"document.activeElement.id==='execution-record'");
   await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
   await check('saved download reachable by keyboard '+width,"document.activeElement.textContent==='Download saved monthly work'");
-  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
   await until("document.getElementById('execution-message').textContent.includes('copy prepared')");
   await check('keyboard download excludes submitting work '+width,"window.fixtureWrites===0&&document.getElementById('execution-message').textContent.includes('no submission or completion credit')");
   await evaluate("document.getElementById('password').value='NEVER-PRINT-PASSWORD';window.dispatchEvent(new Event('beforeprint'))");await cdp('Emulation.setEmulatedMedia',{media:'print'});
