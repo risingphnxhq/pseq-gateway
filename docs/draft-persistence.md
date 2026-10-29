@@ -1,0 +1,23 @@
+# Versioned consultation draft persistence — October 17, 2026
+
+This is a further construction increment, performed by Codex in the Corporate Chad conversation. No independent officer or CATE execution is claimed.
+
+Physical metadata searches found no existing consultation/PSEQ/milestone tables. Existing pbb_build_sessions contains build-session payloads and legacy scoring fields, not owned continuing consultation versions. Two private PBS draft tables extend the existing Systems product database and reference its existing pbs_entities. No customer identity database or enterprise case registry is duplicated.
+
+Applied migration: pbs_versioned_consultation_drafts. The private backend evidence package contains the exact applied SQL and rollback acceptance test; internal backend SQL is not added to this public repository. Existing customer rows and ownership are untouched.
+
+The server treats every saved payload as CUSTOMER_DECLARED_DRAFT, not authoritative receipt, authorized quality review, diagnostic score or financial entitlement. JSON shape/version and size are bounded; client restore checks internal preview structure. A tampered but structurally valid draft remains untrusted. Production progression must use separate server-controlled commands and authorized assessments; none may consume these client credit/status fields as authority.
+
+Private tables have RLS enabled and no direct anon/authenticated table privileges. Public functions are security invoker wrappers. Private security definer implementations pin empty search_path, require auth.uid and verify existing business owner. Six function grants and two table security configurations physically verified. Advisor gives informational RLS/no-policy findings for these intentionally RPC-only private tables, documented at https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy . No wider project security certification is claimed.
+
+Save uses an expected revision, owner-business row lock and draft lock; stale writes fail. A unique request ID preserves retry identity; conflicting retries fail. Every accepted save writes a version, current payload and existing PBS operational-history event in one transaction. Prior version retrieval and latest draft list are owner guarded. Retained previous versions support recovery; no automatic overwrite or version deletion API is exposed.
+
+Executed database test uses two synthetic subject claims under authenticated role, not real Auth sessions. Owner create/save/load/list, idempotency, conflict, earlier version recovery, cross-owner load/list/save/reassignment denial, direct table access denial and anonymous RPC denial passed. Fixtures rolled back; readback found zero synthetic businesses.
+
+Browser code now has existing-account email/password sign-in, verified getUser, owned-business selection, private business creation, draft save and list/load. Only the actual project publishable key is used. Session persistence and URL session detection disabled; no credential/token storage in browser localStorage by this code. Supabase SDK refreshes the in-memory session. No signup, email sends, account recovery or live prices introduced. Existing-account availability and real Auth/browser acceptance remain unverified.
+
+Cloud client preserves request IDs for interrupted retries. Revision conflict messages require loading/merging current work rather than silently replacing newer work. The UI refuses to save the fictional demo to a real business. Saved payloads are still untrusted customer declarations, including simulated quality assessments.
+
+Local consultation-file restore preserves task IDs, receipts, disclosure acknowledgment, quality notes, cycles and history; it does not regenerate completion credit or independently verify the imported statements. It rejects malformed, duplicate and inconsistent structures. Cloud load applies the same client validation. Source plan history remains preserved.
+
+Tests: 33 engine assertions + 14 task DOM assertions + 19 recovery/client assertions + 12 account-screen assertions (78 total); database rollback suite. Account-screen tests use mocked sign-in, owned-business selection, fictional-save refusal, save confirmation and sign-out clearing. Production dependencies audit reports zero known vulnerabilities at this check. No real account login, JWT/API two-account browser test, mobile/print/accessibility acceptance or independent CATE/practitioner validation is claimed. Full consultation intelligence, server-controlled task/submission/review transitions, payment security/fulfillment and paid-production acceptance remain incomplete.

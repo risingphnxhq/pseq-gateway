@@ -1,0 +1,33 @@
+// Nonbilling customer delivery checks: loaded saved records, not preview or unsent edits.
+const {parseHTML}=require('linkedom'),fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {window}=parseHTML(fs.readFileSync('consultation.html','utf8')),d=window.document,state=require('./recovery-fixture.cjs')().monthly;
+let checks=0,blob,downloaded,prints=0,writes=0;const ok=(label,value)=>{assert.ok(value,label);checks++;};window.confirm=()=>true;window.print=()=>{prints++;window.dispatchEvent(new window.Event('beforeprint'));};
+Object.defineProperty(d.getElementById('business-select'),'value',{value:'business-a',writable:true});window.PBSAccountClient={rpc:async()=>{writes++;throw Error('Delivery must not write');}};
+const oldClick=window.HTMLElement.prototype.click;window.HTMLElement.prototype.click=function(){if(this.tagName==='A')downloaded=this.download;else oldClick?.call(this);};
+const context={window,document:d,crypto,structuredClone,Blob,URL:{createObjectURL:b=>{blob=b;return 'blob:synthetic-output';},revokeObjectURL:()=>{}},setTimeout:fn=>{fn();}};
+for(const file of ['execution-client.js','pbs-print.js'])vm.runInNewContext(fs.readFileSync(file,'utf8'),context);
+const button=text=>[...d.querySelectorAll('#execution-record button')].find(x=>x.textContent===text);
+(async()=>{
+ d.dispatchEvent(new window.CustomEvent('pbs-recover-monthly',{detail:{business_id:'business-a',saved:state}}));
+ ok('saved record print works without preview plan',d.getElementById('workspace').hidden&&!!button('Print saved monthly work'));
+ ok('saved download is available on recovered monthly record',!!button('Download saved monthly work'));
+ const note=d.querySelector('#execution-record textarea');note.value='UNSENT-WORK-MUST-NOT-BE-IN-SAVED-COPY';d.getElementById('password').value='SECRET-NOT-IN-OUTPUT';
+ await button('Download saved monthly work').onclick();const copy=JSON.parse(await blob.text());
+ ok('output identifies its format and saved-version provenance',copy.format==='PBS-SAVED-MONTHLY-COPY-1'&&copy.provenance==='COPY_OF_LOADED_SAVED_RECORD');
+ ok('download retains business and consultation identity',copy.business_id==='business-a'&&copy.consultation.consultation_id===state.consultation_id);
+ ok('download preserves original receipt',copy.consultation.tasks[0].submissions[0].token==='receipt-a');
+ ok('download preserves quality as unassessed',copy.consultation.tasks[0].submissions[0].quality_assessment===null);
+ ok('download excludes unsent form edits',!JSON.stringify(copy).includes('UNSENT-WORK'));
+ ok('download excludes credentials',!JSON.stringify(copy).includes('SECRET-NOT-IN-OUTPUT'));
+ ok('download has ordinary named file',downloaded==='PBS-saved-monthly-work.json');
+ ok('download explains unsent edits and unchanged credit',d.getElementById('execution-message').textContent.includes('Unsent edits are excluded'));
+ await button('Print saved monthly work').onclick();const print=d.getElementById('pbs-print-view');
+ ok('print action invokes print with saved record present',prints===1&&!!print);
+ ok('print retains saved receipt',print.textContent.includes('receipt-a'));
+ ok('print excludes password',!print.textContent.includes('SECRET-NOT-IN-OUTPUT'));
+ ok('print does not certify work',print.textContent.includes('Printing does not submit work'));
+ ok('delivery makes no service write',writes===0);
+ window.dispatchEvent(new window.Event('afterprint'));ok('temporary print copy removed',!d.getElementById('pbs-print-view'));
+ d.dispatchEvent(new window.CustomEvent('pbs-account-signed-out'));ok('sign-out clears saved delivery controls',!button('Download saved monthly work')&&!button('Print saved monthly work'));
+ console.log(checks+' saved-output delivery checks passed (synthetic DOM; no charges or external calls).');
+})().catch(e=>{console.error(e);process.exitCode=1;});

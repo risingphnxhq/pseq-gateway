@@ -1,0 +1,12 @@
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else{const api=root.PBSAccessControl=factory();if(root.PBSAccountClient){root.PBSAccess=api.create({client:root.PBSAccountClient,onDenied:()=>{document.dispatchEvent(new root.CustomEvent('pbs-account-signed-out'));document.dispatchEvent(new root.CustomEvent('pbs-access-denied'));}});root.addEventListener('pagehide',()=>{void root.PBSAccess.close();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void root.PBSAccess.recheck();});root.setInterval(()=>{if(document.visibilityState!=='hidden')void root.PBSAccess.recheck();},30000);}}})(typeof window!=='undefined'?window:globalThis,function(){'use strict';
+const DENIED='PBS access is not enabled for this account. Private work has been cleared from this page; saved records remain unchanged.';
+const error=message=>Object.assign(Error(message),{definitive:true});
+function denied(result){return result?.status===401||['PGRST301','PGRST302'].includes(result?.error?.code)||(result?.error?.code==='42501'&&['PBS_ACCESS_NOT_ENABLED','PBS_AUTH_REQUIRED'].includes(result.error.message));}
+function create({client,onDenied=()=>{}}){
+ const original=client.rpc.bind(client);let epoch=0,active=false,blocked=false,signout=null;
+ async function reject(){if(!blocked){blocked=true;active=false;epoch++;onDenied();}if(!signout){signout=Promise.resolve().then(()=>client.auth.signOut({scope:'local'})).catch(()=>null).finally(()=>{signout=null;});}await signout;}
+ async function check(){if(blocked)throw error(DENIED);const before=epoch;const result=await original('pbs_check_access_v1',{});if(denied(result)){await reject();throw error(DENIED);}if(before!==epoch)throw error('Your account access changed. Sign in again before recovering private work.');if(result.error||result.data!==true)throw Error('PBS access could not be checked. Your request was not sent. Try again when the connection is available.');active=true;return true;}
+ client.rpc=async function(...args){await check();const before=epoch;const result=await original(...args);if(denied(result)){await reject();throw error(DENIED);}if(before!==epoch)throw error('Your account access changed. Recover saved work after signing in again.');return result;};
+ return {check,reject,reset(){epoch++;active=false;blocked=false;},async recheck(){if(!active||blocked)return;try{await check();}catch{}},async close(){await reject();},message:DENIED};
+}
+return {create,denied,DENIED};});
