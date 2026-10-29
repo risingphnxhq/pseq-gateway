@@ -1,16 +1,17 @@
+import {safeBinaryCorrection} from './database-corrections.mjs';
 // PBS-only transport. Firebase credentials never go to the shared project's Data API.
 const ROOT='https://oyjmpbuxvfxusmbouldi.supabase.co';
 const ENDPOINT=ROOT+'/functions/v1/pbs-firebase-workspace';
 const RPC=new Set(['pbs_check_access_v1','pbs_create_business_v1','pbs_save_assessment_draft_v1','pbs_assessment_report_v1','pbs_list_consultation_drafts_v1','pbs_load_consultation_draft_v1','pbs_save_consultation_draft_v1','pbs_execution_command_v1','pbs_execution_read_v1','pbs_case_create_v1','pbs_case_read_v1','pbs_case_update_v1']);
 export function createWorkspaceClient({account,fetcher=fetch}){
  let generation=0;
- const failure=(message,status=400,code='22023')=>({data:null,error:{message,code},status});
+ const failure=(message,status=400,code='22023',receipt=null)=>({data:null,error:{message,code,...receipt?{binary_validation:receipt}:{}},status});
  async function send(operation,args={}){
   const g=generation;
   try{const a=await account;if(!a.user()?.email_verified)return failure('PBS_AUTH_REQUIRED',401,'42501');const token=await a.workspaceToken();if(g!==generation)return failure('PBS_AUTH_REQUIRED',401,'42501');
    const response=await fetcher(ENDPOINT,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({operation,arguments:args}),cache:'no-store',signal:AbortSignal.timeout(105000)});
    const data=await response.json();if(g!==generation)return failure('PBS_AUTH_REQUIRED',401,'42501');
-   return response.ok?{data,error:null,status:response.status}:failure(data.error||'PBS_REQUEST_REJECTED',response.status,data.code||(response.status===401?'42501':'22023'));
+   return response.ok?{data,error:null,status:response.status}:failure(data.error||'PBS_REQUEST_REJECTED',response.status,data.code||(response.status===401?'42501':'22023'),safeBinaryCorrection(data));
   }catch{return failure('PBS sign-in or connection could not be confirmed.',503,'CONNECTION_UNCONFIRMED');}
  }
  const client={
@@ -35,3 +36,4 @@ export function createWorkspaceClient({account,fetcher=fetch}){
  };
  return client;
 }
+
