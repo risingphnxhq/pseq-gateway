@@ -10,5 +10,6 @@ function apply(key,{focus=true,write=true}={}){const c=choices[key];if(!c)return
 for(const [key,c]of Object.entries(choices)){const a=node('a',c.label);a.href=url(key).href;a.onclick=e=>{e.preventDefault();apply(key);};nav.append(a);links[key]=a;}panel.append(nav,status);d.querySelector('main .hero').after(panel);
 for(const [href,key]of [['https://pbrs.risingphoenixhq.com/','PBRS'],['https://pbb.risingphoenixhq.com/','PBB'],['#monthly','PSEQ'],['#history','PSEQ']])for(const a of d.querySelectorAll('a'))if(a.getAttribute('href')===href){a.href=url(key).href;a.onclick=e=>{e.preventDefault();apply(key);};}
 window.PBSEntry=Object.freeze({select:key=>apply(String(key).toUpperCase()),current:()=>active});
-const requested=new URL(window.location?.href||'https://pseq.risingphoenixhq.com/consultation.html').searchParams.get('use')?.toUpperCase();apply(choices[requested]?requested:'ALL',{focus:false,write:false});
+const requested=new URL(window.location?.href||'https://pseq.risingphoenixhq.com/consultation.html').searchParams.get('use')?.toUpperCase();apply(choices[requested]?requested:choices[d.body.dataset.pbsSystem]?d.body.dataset.pbsSystem:'ALL',{focus:false,write:false});
 })();
+

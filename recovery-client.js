@@ -16,5 +16,6 @@ button(panel,'Find saved work for this business',async g=>{const b=$('business-s
  out.append(answers,plans,monthly);status.textContent=r.assessments.length+' assessments, '+r.plans.length+' plans and '+r.monthly.length+' monthly records found (up to 100 of each). Choose a saved plan or monthly consultation to continue.';
 });
 panel.append(status,out);$('server-execution').before(panel);
-$('business-select').addEventListener('change',clear);$('sign-in').addEventListener('submit',clear);$('sign-out').addEventListener('click',clear);for(const name of ['pbs-account-signed-out','pbs-business-context-changed','pbs-access-denied'])d.addEventListener(name,clear);d.addEventListener('pbs-entry-layer-changed',clear);window.addEventListener('pagehide',clear);
+$('business-select').addEventListener('change',clear);$('sign-in').addEventListener('submit',clear);$('sign-out').addEventListener('click',clear);for(const name of ['pbs-account-signed-out','pbs-business-context-changed','pbs-access-denied'])d.addEventListener(name,clear);window.addEventListener('pagehide',clear);
 })();
+
