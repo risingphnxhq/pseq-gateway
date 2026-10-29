@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {parseHTML} from 'linkedom';import {mountFirebaseAccount} from '../firebase-account-controller.mjs';
 let n=0;const ok=x=>{assert.ok(x);n++;};
-function fixture(mode=null,overrides={}){
- const {window}=parseHTML(fs.readFileSync('account-construction.html','utf8')),d=window.document,calls=[],action={mode,code:mode?'fictional-code':null,clear(){this.mode=null;this.code=null;}};
+function fixture(mode=null,overrides={},destination=null){
+ const {window}=parseHTML(fs.readFileSync('account.html','utf8')),d=window.document,calls=[],action={mode,code:mode?'fictional-code':null,clear(){this.mode=null;this.code=null;}};
  const account={signUp:async x=>calls.push(['signup',x.email,x.password.length]),requestVerification:async x=>calls.push(['verification-request',x.email,x.password.length]),requestReset:async x=>calls.push(['reset-request',x]),inspectReset:async()=>({email:'fictional@example.invalid'}),confirmReset:async(c,p)=>calls.push(['confirm',c,p.length]),verifyEmail:async c=>calls.push(['verify',c]),close:async()=>calls.push(['close']),...overrides};
+ window.PBSAccountDestination=destination;
+ vm.runInNewContext(fs.readFileSync('account-system-return.js','utf8'),{window,document:d});
  const api=mountFirebaseAccount({document:d,window,account,action}),$=id=>d.getElementById(id),submit=id=>$(id).onsubmit({preventDefault(){}});
  return {d,window,api,action,account,calls,$,submit,msg:()=>$('account-message').textContent};
 }
@@ -18,5 +20,9 @@ for(const code of ['auth/expired-action-code','auth/invalid-action-code']){f=fix
 let count=0;f=fixture('resetPassword',{inspectReset:async()=>({email:++count===1?'original@example.invalid':'another@example.invalid'})});await f.$('verify-account-link').onclick();f.$('recovery-account-confirm').checked=true;f.$('new-password').value=f.$('new-password-confirm').value='fictional-password-123';await f.submit('new-password-form');ok(!f.calls.some(c=>c[0]==='confirm'));ok(f.$('recovery-identity').textContent==='');
 let release;f=fixture('resetPassword',{inspectReset:()=>new Promise(r=>release=r)});const pending=f.$('verify-account-link').onclick();await new Promise(r=>setImmediate(r));await f.api.close();release({email:'late@example.invalid'});await pending;ok(f.$('account-new-password').hidden);ok(!f.d.body.textContent.includes('late@example.invalid'));ok(f.action.code===null);ok(f.msg()==='');
 const callback=fs.readFileSync('firebase-account-callback.js','utf8');for(const [search,valid] of [['?mode=resetPassword&oobCode=fictional',true],['?mode=verifyEmail&oobCode=fictional',true],['?mode=resetPassword&oobCode=fictional&apiKey=wrong-project',false],['?mode=resetPassword&oobCode=a&oobCode=b',false],['?mode=signIn&oobCode=fictional',false]]){let scrubbed;const w={};vm.runInNewContext(callback,{window:w,location:{search,hash:'#secret',pathname:'/account.html'},history:{replaceState:(a,b,p)=>scrubbed=p},URLSearchParams});ok(scrubbed==='/account.html');ok((!!w.PBSFirebaseAction.code)===valid);w.PBSFirebaseAction.clear();ok(w.PBSFirebaseAction.code===null);}
-ok(!fs.readFileSync('account.html','utf8').includes('pbs-firebase-account-page.js'));
+ok(fs.readFileSync('account.html','utf8').includes('pbs-firebase-account-page.js'));
+for(const [use,target]of [['pqs','pqs.html#account-panel'],['pbrs','pbrs.html#account-panel'],['pbb','pbb.html#account-panel'],['pseq','pseq.html#account-panel'],['https://untrusted.invalid/','consultation.html?use=all#account-panel']]){const w={};vm.runInNewContext(callback,{window:w,location:{search:'?use='+encodeURIComponent(use),hash:'',pathname:'/account.html'},history:{replaceState(){}},URLSearchParams});ok(w.PBSAccountDestination===target);}
+for(const destination of ['pqs.html#account-panel','pbrs.html#account-panel','pbb.html#account-panel','pseq.html#account-panel']){const x=fixture(null,{},destination);ok(x.$('account-return').getAttribute('href')===destination);}
+const unsafe=fixture(null,{},'https://untrusted.invalid');ok(unsafe.$('account-return').getAttribute('href').startsWith('consultation.html'));
 console.log(n+' Firebase account-page checks passed (synthetic DOM and mocked email actions).');
+

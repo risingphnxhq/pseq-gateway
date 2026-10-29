@@ -39,6 +39,7 @@ function fixture(){let permitted=true,failure=false,signouts=0,clears=0,operatio
  const refresh=d.getElementById('refresh-businesses').onclick();await new Promise(r=>setImmediate(r));
  await window.PBSAccess.reject();names.resolve({data:[{id:'old-id',legal_name:'OLD PRIVATE BUSINESS'}],error:null});await refresh;
  ok(!select.textContent.includes('OLD PRIVATE BUSINESS'));ok(select.children.length===0);
- const paused=fs.readFileSync('account.html','utf8');ok(paused.includes('account access is temporarily paused'));ok(!paused.includes('<form'));ok(!paused.includes('vendor/pbs-account.js'));
- console.log(checks+' access-loss and account-pause checks passed (mocked transport and synthetic DOM; not recovery acceptance).');
+ const accountPage=fs.readFileSync('account.html','utf8');ok(accountPage.includes('firebase-account-callback.js'));ok(accountPage.includes('vendor/pbs-firebase-account-page.js'));ok(!accountPage.includes('vendor/pbs-account.js'));
+ console.log(checks+' access-loss and isolated-account-route checks passed (mocked transport and synthetic DOM; not recovery acceptance).');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+

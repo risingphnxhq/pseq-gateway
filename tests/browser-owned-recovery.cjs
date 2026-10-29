@@ -18,6 +18,8 @@ window.PBSAccountClient={auth:{getUser:async()=>({data:{user:{id:window.fixtureO
  const click=i=>evaluate(`document.querySelectorAll('#owned-recovery > button')[${i}].onclick()`);
  for(const width of [1280,390]){
   await cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await cdp('Page.navigate',{url:'http://127.0.0.1:8765/consultation.html'});await until("document.readyState==='complete'&&!!document.getElementById('owned-recovery')");
+  await cdp('Page.navigate',{url:'http://127.0.0.1:8765/account.html?use=pbb'});await until("document.readyState==='complete'&&!!document.getElementById('signup-form')&&document.getElementById('account-return')?.getAttribute('href')==='pbb.html#account-panel'");
+  await check('PBS account entry and safe return '+width,"!!document.getElementById('reset-request-form')&&location.search===''&&document.getElementById('account-return').getAttribute('href')==='pbb.html#account-panel'");
   for(const code of ['PQS','PBRS','PBB','PSEQ']){
    await cdp('Page.navigate',{url:'http://127.0.0.1:8765/'+code.toLowerCase()+'.html'});await until("document.readyState==='complete'&&!!window.PBSEntry");
    await check('independent '+code+' route '+width,"document.body.dataset.pbsLayer==="+JSON.stringify(code)+"&&!!document.getElementById('business-select')&&window.fixtureWrites===0");
