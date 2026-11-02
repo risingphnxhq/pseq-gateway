@@ -1,0 +1,101 @@
+name: PBS workspace checks
+on:
+  push:
+    branches: [construction/continual-consultation-workspace]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+  live-saved-journey:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[live-pbs-check]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Run bounded normal-account test
+        run: node tests/live-saved-journey.cjs
+        env:
+          PBS_RUN_NORMAL_ACCOUNT_TEST: 'yes'
+          PBS_TEST_BROWSER: 'yes'
+          PBS_EVIDENCE_PATH: '${{ runner.temp }}/pbs-evidence.json'
+  browser-workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Check workspace in real headless Chrome
+        run: node tests/browser-workspace.cjs
+      - name: Verify owned recovery in Chrome with simulated services
+        run: node tests/browser-owned-recovery.cjs
+  account-settings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Read public authentication settings
+        run: node tests/auth-settings-preflight.cjs
+  account-signup:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[account-signup-check]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Prove normal browser account creation
+        run: node tests/browser-account-signup.cjs
+        env:
+          PBS_RUN_ACCOUNT_SIGNUP_TEST: 'yes'
+  live-advice:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[live-advice-check]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Run bounded fictional advice tests
+        run: node tests/live-advice-v12.cjs
+        env:
+          PBS_RUN_LIVE_ADVICE: 'yes'
