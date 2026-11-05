@@ -5,12 +5,13 @@ export function validateFirebaseConfig(config){
  if(config?.projectId!==PBS_FIREBASE_PROJECT||config.authDomain!==PBS_FIREBASE_PROJECT+'.firebaseapp.com'||!/^AIza[\w-]{35}$/.test(config.apiKey)||!/^1:703846445166:web:[a-f0-9]+$/.test(config.appId))throw Error('PBS Firebase configuration is not verified.');
  return {...config};
 }
-export async function createFirebaseAccount({config,sdk,onCleared=()=>{}}){
+export async function createFirebaseAccount({config,sdk,onCleared=()=>{},system=null}){
  validateFirebaseConfig(config);
  const app=sdk.initializeApp(config,'pbs-customer-auth'),auth=sdk.initializeAuth(app,{persistence:sdk.inMemoryPersistence});
  await auth.authStateReady();
  let generation=0,closed=false,busy=false;
- const actionSettings={url:PBS_ACCOUNT_URL,handleCodeInApp:false};
+ if(system!==null&&!['pqs','pbrs','pbb','pseq'].includes(system))throw Error('PBS account destination is unavailable.');
+ const actionSettings={url:PBS_ACCOUNT_URL+(system?'?use='+system:''),handleCodeInApp:false};
  function current(g){if(closed||g!==generation)throw Error('This account page changed. Reopen it before continuing.');}
  async function operation(fn){if(closed)throw Error('This account page is closed.');if(busy)throw Error('Wait for the current account request to finish.');busy=true;const g=generation;try{const result=await fn(g);current(g);return result;}finally{busy=false;}}
  function identity(user){return user?{id:user.uid,email:user.email,email_verified:user.emailVerified===true}:null;}
@@ -30,3 +31,4 @@ export async function createFirebaseAccount({config,sdk,onCleared=()=>{}}){
   async close(){closed=true;generation++;onCleared();await sdk.signOut(auth);}
  };
 }
+
